@@ -1,0 +1,28 @@
+{
+  "name": "react-template",
+  "version": "0.0.0",
+  "description": "ReactTemplate",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "template"
+  ],
+  "author": "TakumiBaba",
+  "license": "MIT",
+  "devDependencies": {
+    "browser-sync": "^1.5.2",
+    "gulp": "^3.8.8",
+    "gulp-jade": "^0.8.0",
+    "gulp-webpack": "^0.4.1"
+  },
+  "dependencies": {
+    "babascript-client": "^0.2.2",
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "https://registry.npmjs.org/coffee-script/-/coffee-script-1.8.0.tgz",
+    "react": "^0.11.2",
+    "react-kup": "^0.3.0"
+  }
+}
