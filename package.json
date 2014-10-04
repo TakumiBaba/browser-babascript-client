@@ -16,6 +16,8 @@
     "browser-sync": "^1.5.2",
     "gulp": "^3.8.8",
     "gulp-jade": "^0.8.0",
+    "gulp-plumber": "^0.6.6",
+    "gulp-sass": "^1.0.0",
     "gulp-webpack": "^0.4.1"
   },
   "dependencies": {
