@@ -34,18 +34,3 @@ client.on "get_task", (task) ->
   React.renderComponent view, document.getElementById "returnvalue"
 client.on "return_value", ->
   React.renderComponent new Views.Disable(), document.getElementById 'returnvalue'
-
-# tasks = [
-#   {text: 'are', status: null}
-#   {text: 'are', status: null}
-#   {text: 'are', status: null}
-#   {text: 'are', status: null}
-#   {text: 'are', status: null}
-#   {text: 'are', status: null}
-
-# ]
-# header = new Header()
-# React.renderComponent new Views.Boolean(), document.getElementById 'returnvalue'
-# React.renderComponent new Views.String(), document.getElementById 'returnvalue'
-# React.renderComponent new Views.Number(), document.getElementById 'returnvalue'
-# React.renderComponent new Views.List({list: [1,2,3,4,5]}), document.getElementById 'returnvalue'
