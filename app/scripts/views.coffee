@@ -124,7 +124,7 @@ class LoginView extends Marionette.ItemView
         password: password
       xhrFields:
         withCredentials: true
-    .done (res)=>
+    .done (res)->
       window.localStorage.setItem "username", username
       app.router.navigate "/", true
       window.location.reload()
@@ -142,7 +142,7 @@ class LoginView extends Marionette.ItemView
         password: password
       xhrFields:
         withCredentials: true
-    .done (res)=>
+    .done (res)->
       window.localStorage.setItem "username", username
       $.ajax
         type: "POST"
