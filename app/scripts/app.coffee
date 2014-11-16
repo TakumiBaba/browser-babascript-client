@@ -1,6 +1,5 @@
 Backbone = require 'backbone'
 Marionette = require 'backbone.marionette'
-M = require 'marionette'
 Client = require 'babascript-client'
 
 class Router extends Marionette.AppRouter
@@ -30,9 +29,6 @@ class Controller extends Marionette.Controller
     app.login.show new require('./views').Login()
 
   cancel: ->
-    console.log 'cancel'
-    # app.task.reset()  
-    # app.main.destroy()
     app.main.show new new require('./views').ThrowErrorView()
 
 app = new Marionette.Application()
