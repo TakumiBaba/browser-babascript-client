@@ -3,6 +3,118 @@ html
   head
     meta(charset='utf-8')
     meta(name="viewport" content="width=device-width, initial-scale=1,  maximum-scale=1, user-scalable=no")
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    meta(name='apple-mobile-web-app-status-bar-style', content="black")
     link(rel='stylesheet', href='./main.css')
   body
+    #header.navbar.navbar-default(role="navigation")
+    #main
+    #settings
+    #login
+    #error
+
+    script(type="text/template", id="header-template")
+      a.header-title.navbar-brand.text-center babascript
+      .btn-group.pull-right
+        button.btn.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", style="margin-top: 10px")
+          メニュー
+          //- span.glyphicon.glyphicon-list
+        ul.dropdown-menu(role="menu")
+          li: a.cancel-button キャンセル
+          li: a.settings-button 設定
+
+    script(type="text/tepmlate", id="settings-template")
+      .modal-content
+        .modal-header
+          設定
+          button.close(type="button", data-dismiss="modal", aria-hidden="true") x
+        .modal-body
+          .form-group
+            label(for="username") username
+            input#username.form-control(placeholder="username...")
+          button.update.btn.btn-default(type="button") 変更する
+
+    script(type="text/tepmlate", id="login-template")
+      .modal-content
+        .modal-header
+          ログイン
+          button.close(type="button", data-dismiss="modal", aria-hidden="true") x
+        .modal-body
+          .form-group
+            label(for="username") username
+            input#username.form-control(placeholder="username...")
+          .form-group
+            label(for="password") password
+            input#password.form-control(type='password', placeholder="password...")
+        .modal-footer
+          button.login.btn.btn-default(type="button") ログイン
+          button.signup.btn.btn-info(type="button") サインアップ
+
+    script(type="text/template", id="main-template")
+      #returnview
+
+    script(type="text/template", id="normal-template")
+      h3.text-center.text-center 命令を待ってください
+
+    script(type="text/template", id="boolean-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      button.true.btn.btn-primary.btn-block(type="button") はい
+      button.false.btn.btn-danger.btn-block(type="button") いいえ
+
+    script(type="text/template", id="string-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      form(role="form")
+        input.form-control.string-value(type="text", style="margin-bottom: 10px")
+      button.btn.btn-primary.btn-lg.btn-block(type="button") 値を返す
+
+    script(type="text/template", id="number-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      form(role="form")
+        input.form-control.number-value(type="number", style="margin-bottom: 10px")
+      button.btn.btn-primary.btn-lg.btn-block(type="button") 値を返す
+
+    script(type="text/template", id="list-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      select.form-control
+        <% _.each(list, function(item){ %>
+        option<%= item %>
+        <% }); %>
+      button.btn-primary.btn-lg.btn-block(type="button") 値を返す
+
+    script(type="text/template", id="void-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      button.void.btn.btn-primary.btn-block(type="button") はい
+
+    script(type="text/template", id="camera-template")
+      h3.text-center <%= key %>
+      p.description <%= description %>
+      hr
+      input.camera(type="file",accept="image/*;capture=camera",id="imageFile")
+
+    script(type="text/template", id="throw-error-template")
+      .modal-dialog
+        .modal-content
+          .modal-header
+            strong.text-center 命令内容は [<%= key %>] です。
+          .modal-body
+            p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+            form(role="form")
+              input.form-control.string-value(type="text", style="margin-bottom: 10px")
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+          .modal-footer
+            button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
+            button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
     script(src="./app.js")

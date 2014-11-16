@@ -3,11 +3,12 @@ jade = require 'gulp-jade'
 sass = require 'gulp-sass'
 plumber = require 'gulp-plumber'
 webpack = require 'gulp-webpack'
+_webpack = require 'webpack'
 browserSync = require 'browser-sync'
 reload = browserSync.reload
 
 gulp.task 'webpack', ->
-  return gulp.src 'app/scripts/app.coffee'
+  return gulp.src 'app/scripts/main.coffee'
   .pipe plumber()
   .pipe webpack
     output:
@@ -18,6 +19,8 @@ gulp.task 'webpack', ->
       ]
     resolve:
       extensions: ["", ".web.coffee", ".web.js", ".coffee", ".js"]
+      modulesDirectories: ['node_modules', '../../bower_components']
+      # alias: bootstrap: '../../node_modules/bootstrap/dist/js/bootstrap.js'
   .pipe gulp.dest 'public/'
   .pipe reload stream: true
 
@@ -32,7 +35,7 @@ gulp.task 'jade', ->
   .pipe jade
     locals: {}
   .pipe gulp.dest "public/"
-  .pipe reload stream: true  
+  .pipe reload stream: true
 
 gulp.task 'sass', ->
   return gulp.src 'app/styles/main.scss'

@@ -1,36 +1,50 @@
-React = require 'react'
-Kup = require('react-kup')(React)
-
-LindaAdapter = require 'babascript-linda-adapter'
+Backbone = require 'backbone'
+Marionette = require 'backbone.marionette'
+M = require 'marionette'
 Client = require 'babascript-client'
 
-Header = require './components/header'
-Footer = require './components/footer'
-Order  = require './components/order'
-Views  = require './components/views'
+class Router extends Marionette.AppRouter
+  appRoutes:
+    "": "to"
+    "login": "login"
+    "settings": "settings"
+    ":tuplespace": "to"
+    ":tuplespace/": "top"
+    ":tuplespace/cancel": "cancel"
+    ":tuplespace/:view": "client"
+class Controller extends Marionette.Controller
+  to: (tuplespace)->
+    username = window.localStorage.getItem("username")
+    app.router.navigate "/#{username}/", true
 
-client = require './client'
+  top: (tuplespace)->
+    app.main.currentView.changeView()
 
-order = new Order()
+  client: (tuplespace, viewname)->
+    if !app.task?
+      return app.router.navigate "/#{tuplespace}/", true
 
-header = React.renderComponent new Header(), document.getElementById "header"
-order = React.renderComponent new Order(), document.getElementById "order"
-returnv = React.renderComponent new Views.Disable(), document.getElementById 'returnvalue'
+  settings: ->
 
-client.on "get_task", (task) ->
-  console.log task
-  format = task.format
-  console.log order
-  order.setState {order: task.key}
-  view = switch format
-    when "boolean"
-      new Views.Boolean()
-    when "string"
-      new Views.String()
-    when "list"
-      new Views.List({list: task.options.list})
-    when "number"
-      new Views.Number()
-  React.renderComponent view, document.getElementById "returnvalue"
-client.on "return_value", ->
-  React.renderComponent new Views.Disable(), document.getElementById 'returnvalue'
+  login: ->
+    app.login.show new require('./views').Login()
+
+  cancel: ->
+    console.log 'cancel'
+    # app.task.reset()  
+    # app.main.destroy()
+    app.main.show new new require('./views').ThrowErrorView()
+
+app = new Marionette.Application()
+
+app.addRegions
+  'header': '#header'
+  'main': '#main'
+  'settings': '#settings'
+  'login': '#login'
+  'error': '#error'
+
+app.router = new Router
+  controller: new Controller()
+
+module.exports = app
