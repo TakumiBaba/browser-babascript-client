@@ -5,12 +5,15 @@ Adapter = require 'babascript-linda-adapter'
 Model = require './model'
 app = require('./app')
 
+weare = null
+
 app.addInitializer ->
+
   @task = new Model.Task()
   @header.show new Views.Header()
   @main.show new Views.Main
     model: @task
-  adapter = new Adapter "http://192.168.1.127", {port: 8931}
+  adapter = new Adapter "http://192.168.2.110", {port: 8931}
   @client = new Client "takumibaba", {adapter: adapter}
   @client.on "get_task", (result) =>
     window.plugin?.notification?.local?.add
