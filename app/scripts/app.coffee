@@ -1,6 +1,5 @@
 Backbone = require 'backbone'
 Marionette = require 'backbone.marionette'
-M = require 'marionette'
 Client = require 'babascript-client'
 
 class Router extends Marionette.AppRouter
@@ -12,7 +11,9 @@ class Router extends Marionette.AppRouter
     ":tuplespace/": "top"
     ":tuplespace/cancel": "cancel"
     ":tuplespace/:view": "client"
+
 class Controller extends Marionette.Controller
+
   to: (tuplespace)->
     username = window.localStorage.getItem("username")
     app.router.navigate "/#{username}/", true
@@ -31,8 +32,6 @@ class Controller extends Marionette.Controller
 
   cancel: ->
     console.log 'cancel'
-    # app.task.reset()  
-    # app.main.destroy()
     app.main.show new new require('./views').ThrowErrorView()
 
 app = new Marionette.Application()

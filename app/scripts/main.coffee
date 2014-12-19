@@ -20,7 +20,7 @@ app.addInitializer ->
       format: result.format
       list: result.list
       description: result.description
-  @client.on "returned", ->
+  @client.on "return_value", ->
 
   Backbone.history.start()
 app.start()
