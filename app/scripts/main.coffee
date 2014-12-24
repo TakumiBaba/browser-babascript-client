@@ -10,9 +10,9 @@ app.addInitializer ->
   @header.show new Views.Header()
   @main.show new Views.Main
     model: @task
-  adapter = new Adapter "http://localhost", {port: 8931}
-  console.log adapter
-  @client = new Client "takumibaba", {adapter: adapter}
+  # adapter = new Adapter "http://localhost", {port: 8931}
+  # console.log adapter
+  @client = new Client "takumibaba"
   @client.on "get_task", (result) =>
     @task.set
       cid: result.cid
