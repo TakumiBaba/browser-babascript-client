@@ -11,6 +11,7 @@ app.addInitializer ->
   @main.show new Views.Main
     model: @task
   adapter = new Adapter "https://babascript-linda.herokuapp.com", {port: 80}
+  console.log adapter
   @client = new Client "takumibaba", {adapter: adapter}
   @client.on "get_task", (result) =>
     @task.set
