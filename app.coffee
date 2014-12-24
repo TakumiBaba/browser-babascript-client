@@ -2,11 +2,9 @@
 
 express = require 'express'
 path = require 'path'
-debug = require('debug')('babascript:client:browser')
+bodyParser = require 'body-parser'
 
 config = port: process.env.PORT or 8931
-
-bodyParser = require 'body-parser'
 app = express()
 
 app.disable 'X-powered-by'
