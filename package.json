@@ -1,5 +1,5 @@
 {
-  "name": "Babascript Client App",
+  "name": "BabascriptClient",
   "version": "0.0.1",
   "description": "Babascript client application",
   "main": "index.js",
