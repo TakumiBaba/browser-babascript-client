@@ -12,5 +12,4 @@ app.use express.static path.resolve __dirname, 'public'
 app.use bodyParser.urlencoded extended: true
 
 http = require('http').Server app
-http.listen config.port, ->
-  debug config.port
+http.listen config.port
