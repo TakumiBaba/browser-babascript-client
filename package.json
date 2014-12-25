@@ -1,19 +1,21 @@
 {
-  "name": "webpack-template",
-  "version": "0.0.0",
-  "description": "ReactTemplate",
+  "name": "BabascriptClient",
+  "version": "0.0.1",
+  "description": "Babascript client application",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "coffee app.coffee"
   },
   "keywords": [
-    "react",
-    "template"
+    "babascript",
+    "babascript-client"
   ],
   "author": "TakumiBaba",
   "license": "MIT",
   "devDependencies": {
     "browser-sync": "^1.5.2",
+    "debug": "^2.1.0",
     "gulp": "^3.8.8",
     "gulp-jade": "^0.8.0",
     "gulp-plumber": "^0.6.6",
@@ -24,9 +26,11 @@
     "babascript-client": "^0.2.2",
     "babascript-linda-adapter": "^0.1.3",
     "backbone.marionette": "^2.2.1",
+    "body-parser": "^1.10.0",
     "bootstrap": "^3.2.0",
     "coffee-loader": "^0.7.2",
     "coffee-script": "https://registry.npmjs.org/coffee-script/-/coffee-script-1.8.0.tgz",
+    "express": "^4.10.6",
     "jquery": "^2.1.1",
     "webpack": "^1.4.6"
   }

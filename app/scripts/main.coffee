@@ -2,6 +2,7 @@ Backbone = require 'backbone'
 Views = require './views'
 Client = require 'babascript-client'
 Adapter = require 'babascript-linda-adapter'
+Logger = require 'babascript-plugin-logger'
 Model = require './model'
 app = require('./app')
 
@@ -10,7 +11,7 @@ app.addInitializer ->
   @header.show new Views.Header()
   @main.show new Views.Main
     model: @task
-  adapter = new Adapter "http://localhost", {port: 8931}
+  adapter = new Adapter "https://babascript-linda.herokuapp.com", {port: 443}
   console.log adapter
   @client = new Client "takumibaba", {adapter: adapter}
   @client.on "get_task", (result) =>
@@ -20,7 +21,7 @@ app.addInitializer ->
       format: result.format
       list: result.list
       description: result.description
-  @client.on "returned", ->
-
+  @client.on "return_value", (result) ->
+  @client.set "logger", new Logger()
   Backbone.history.start()
 app.start()

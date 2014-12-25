@@ -11,7 +11,9 @@ class Router extends Marionette.AppRouter
     ":tuplespace/": "top"
     ":tuplespace/cancel": "cancel"
     ":tuplespace/:view": "client"
+
 class Controller extends Marionette.Controller
+
   to: (tuplespace)->
     username = window.localStorage.getItem("username")
     app.router.navigate "/#{username}/", true
@@ -29,6 +31,7 @@ class Controller extends Marionette.Controller
     app.login.show new require('./views').Login()
 
   cancel: ->
+    console.log 'cancel'
     app.main.show new new require('./views').ThrowErrorView()
 
 app = new Marionette.Application()
