@@ -24,7 +24,7 @@ class BaseView extends Marionette.ItemView
 
   returnValue: (value, option={})->
     app.task.clear()
-    app.client.emit 'returned'
+    app.client.emit 'return_value'
     app.client.returnValue value, option
     window.plugins?.toast?.show "返り値: #{value}", "short", "center"
 

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "coffee app.coffee"
+    "start": "coffee app.coffee",
+    "gulp": "nodebrew exec v0.10.32 -- gulp"
   },
   "keywords": [
     "babascript",
