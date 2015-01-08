@@ -12,7 +12,6 @@ app.addInitializer ->
   @main.show new Views.Main
     model: @task
   adapter = new Adapter "https://babascript-linda.herokuapp.com", {port: 443}
-  console.log adapter
   @client = new Client "takumibaba", {adapter: adapter}
   @client.on "get_task", (result) =>
     @task.set
@@ -21,7 +20,15 @@ app.addInitializer ->
       format: result.format
       list: result.list
       description: result.description
-  @client.on "return_value", (result) ->
+    window.localStorage?.setItem 'task', JSON.stringify result
+  @client.on "return_value", (tuple) =>
+    window.localStorage?.setItem 'task', ""
   @client.set "logger", new Logger()
   Backbone.history.start()
+
+  task = window.localStorage?.getItem 'task'
+  if task isnt ''
+    console.log task
+    task = JSON.parse task
+    @client.getTask null, {data: task}
 app.start()
