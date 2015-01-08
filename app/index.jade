@@ -8,7 +8,7 @@ html
     link(rel='stylesheet', href='./main.css')
   body
     #header.navbar.navbar-default(role="navigation")
-    #main
+    #main.container
     #settings
     #login
     #error
@@ -51,7 +51,10 @@ html
           button.signup.btn.btn-info(type="button") サインアップ
 
     script(type="text/template", id="main-template")
-      #returnview
+      .row
+        .col-xs-12
+          .well.bs-component
+            #returnview
 
     script(type="text/template", id="normal-template")
       h3.text-center.text-center 命令を待ってください
