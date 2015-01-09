@@ -1,7 +1,5 @@
 Backbone = require 'backbone'
 Marionette = require 'backbone.marionette'
-global.jQuery = $ = require 'jquery'
-Bootstrap = require 'bootstrap/dist/js/bootstrap'
 app = require './app'
 
 class BaseView extends Marionette.ItemView
@@ -23,10 +21,11 @@ class BaseView extends Marionette.ItemView
     return false
 
   returnValue: (value, option={})->
-    app.task.clear()
-    app.client.emit 'return_value'
-    app.client.returnValue value, option
-    window.plugins?.toast?.show "返り値: #{value}", "short", "center"
+    setTimeout ->
+      app.task.clear()
+      app.client.returnValue value, option
+      window.plugins?.toast?.show "返り値: #{value}", "short", "center"
+    , 300
 
   cancel: ->
     console.log app
@@ -101,65 +100,6 @@ class SettingsView extends Marionette.ItemView
     # app.settings.close()
     # @$el.modal()
 
-class LoginView extends Marionette.ItemView
-  template: '#login-template'
-  className: 'modal-dialog'
-  style: ''
-  ui:
-    username: 'input#username'
-    password: 'input#password'
-    login: 'button.login'
-    signup: 'button.signup'
-  events:
-    "click @ui.login": 'login'
-    "click @ui.signup": 'signup'
-  login: ->
-    username = @ui.username.val()
-    password = @ui.password.val()
-    $.ajax
-      type: "POST"
-      url: "#{app.API}/api/session/login"
-      data:
-        username: username
-        password: password
-      xhrFields:
-        withCredentials: true
-    .done (res)=>
-      window.localStorage.setItem "username", username
-      app.router.navigate "/", true
-      window.location.reload()
-    .error ->
-      window.alert "invalid username or password "
-  signup: ->
-    console.log 'singnup'
-    username = @ui.username.val()
-    password = @ui.password.val()
-    $.ajax
-      type: "POST"
-      url: "#{app.API}/api/user/new"
-      data:
-        username: username
-        password: password
-      xhrFields:
-        withCredentials: true
-    .done (res)=>
-      window.localStorage.setItem "username", username
-      $.ajax
-        type: "POST"
-        url: "#{app.API}/api/session/login"
-        data:
-          username: username
-          password: password
-        xhrFields:
-          withCredentials: true
-      .done (res) ->
-        app.router.navigate "/", true
-        window.location.reload()
-      .error (error)->
-        window.alert "invalid username or password "
-    .error ->
-      window.alert "invalid username or password "
-
 class MainView extends Marionette.LayoutView
   template: '#main-template'
   regions:
@@ -198,8 +138,8 @@ class BooleanView extends BaseView
   template: '#boolean-template'
   className: 'boolean-page'
   ui:
-    truebutton: 'button.true'
-    falsebutton: 'button.false'
+    truebutton: 'button.yes-button'
+    falsebutton: 'button.no-button'
   events:
     'click @ui.truebutton': 'returntrue'
     'click @ui.falsebutton': 'returnfalse'
@@ -208,6 +148,7 @@ class BooleanView extends BaseView
   returnfalse: ->
     @returnValue false
 
+# inputの中身が取れない
 class StringView extends BaseView
   template: '#string-template'
   className: 'string-page'
@@ -216,6 +157,7 @@ class StringView extends BaseView
     button: 'button'
   events:
     'click @ui.button': 'returnString'
+
   returnString: ->
     @returnValue @ui.input.val()
 
@@ -225,23 +167,31 @@ class ListView extends BaseView
   ui:
     select: 'select'
     button: 'button'
+    a: 'a'
   events:
+    'click @ui.a': 'returnSelect'
     'click @ui.button': 'returnSelect'
-  returnSelect: ->
-    value = @ui.select.val()
-    console.log value
+  returnSelect: (e) ->
+    value = e.target.id
     @returnValue value
 
 class NumberView extends BaseView
   template: '#number-template'
   className: 'number-page'
   ui:
+    form: 'form.number-form'
     input: 'input.number-value'
     button: 'button'
+    submit: 'input.submit'
   events:
     'click @ui.button': 'returnNumber'
-  returnNumber: ->
-    @returnValue @ui.input.val()
+    'submit @ui.form': 'returnNumber'
+  returnNumber: (e) ->
+    val = Number @ui.input.val()
+    console.log val
+    @returnValue @ui.input.val() if val?
+    return false
+
 
 class VoidView extends BaseView
   template: '#void-template'
@@ -331,6 +281,5 @@ module.exports =
   Number: NumberView
   Void: VoidView
   Task: Task
-  Login: LoginView
   Settings: SettingsView
   ThrowError: ThrowErrorView

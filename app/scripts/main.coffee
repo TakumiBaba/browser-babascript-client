@@ -1,4 +1,9 @@
 Backbone = require 'backbone'
+global.jQuery = global.$ = $ = require 'jquery'
+Bootstrap = require 'bootstrap-material-design/dist/js/material'
+material = require 'bootstrap-material-design/scripts/material'
+ripples = require 'bootstrap-material-design/scripts/ripples'
+
 Views = require './views'
 Client = require 'babascript-client'
 Adapter = require 'babascript-linda-adapter'
@@ -14,21 +19,27 @@ app.addInitializer ->
   adapter = new Adapter "https://babascript-linda.herokuapp.com", {port: 443}
   @client = new Client "takumibaba", {adapter: adapter}
   @client.on "get_task", (result) =>
+    console.log result
     @task.set
       cid: result.cid
       key: result.key
       format: result.format
-      list: result.list
-      description: result.description
+      list: result.options?.list
+      description: result.options?.description
+      example: if result.optinos?.example? then "例: #{result.optinos?.example}" else ''
     window.localStorage?.setItem 'task', JSON.stringify result
   @client.on "return_value", (tuple) =>
+    console.log tuple
     window.localStorage?.setItem 'task', ""
-  @client.set "logger", new Logger()
+  # @client.set "logger", new Logger()
   Backbone.history.start()
 
-  task = window.localStorage?.getItem 'task'
-  if task isnt ''
-    console.log task
-    task = JSON.parse task
-    @client.getTask null, {data: task}
+  # task = window.localStorage?.getItem 'task'
+  # if task isnt ''
+  #   console.log task
+  #   task = JSON.parse task
+  #   @client.getTask null, {data: task}
+
+  $.material.init()
+
 app.start()
