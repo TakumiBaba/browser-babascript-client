@@ -4,35 +4,31 @@ Client = require 'babascript-client'
 
 class Router extends Marionette.AppRouter
   appRoutes:
-    "": "to"
-    "login": "login"
-    "settings": "settings"
-    ":tuplespace": "to"
-    ":tuplespace/": "top"
-    ":tuplespace/cancel": "cancel"
-    ":tuplespace/:view": "client"
+    "": "todo" # todo list interface
+    "done": "done" # done todo list interaface
+    "tasks/:cid": 'returnview' # return value interface
 
 class Controller extends Marionette.Controller
 
-  to: (tuplespace)->
-    username = window.localStorage.getItem("username")
-    app.router.navigate "/#{username}/", true
+  todo: ->
+    console.log 'todo list interface'
+    app.task.clear()
+    # app.main.currentView.changeView()
 
-  top: (tuplespace)->
-    app.main.currentView.changeView()
+  done: ->
+    console.log 'done list interface'
 
-  client: (tuplespace, viewname)->
-    if !app.task?
-      return app.router.navigate "/#{tuplespace}/", true
-
-  settings: ->
-
-  login: ->
-    app.login.show new require('./views').Login()
-
-  cancel: ->
-    console.log 'cancel'
-    app.main.show new new require('./views').ThrowErrorView()
+  returnview: (cid) ->
+    task = app.tasks.where({cid: cid})[0]
+    return app.router.navigate '/', true if !task?
+    app.task.set task.attributes
+    # app.task.set
+    #   cid: task.get 'cid'
+    #   key: task.get 'key'
+    #   format: task.get 'format'
+    #   list: task.get 'list'
+    #   description: task.get 'description' or ''
+    # app.main.currentView.changeView()
 
 app = new Marionette.Application()
 

@@ -20,7 +20,6 @@ gulp.task 'webpack', ->
     resolve:
       extensions: ["", ".web.coffee", ".web.js", ".coffee", ".js"]
       modulesDirectories: ['node_modules', '../../bower_components']
-      # alias: bootstrap: '../../node_modules/bootstrap/dist/js/bootstrap.js'
   .pipe gulp.dest 'public/'
   .pipe reload stream: true
 

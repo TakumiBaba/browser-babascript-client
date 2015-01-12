@@ -23,9 +23,13 @@ class BaseView extends Marionette.ItemView
     return false
 
   returnValue: (value, option={})->
+    # app.client.emit 'return_value'
+    cid = app.task.get 'cid'
+    app.client.returnValue value, cid, option
+    app.tasks.remove app.tasks.where {cid: cid}
+    console.log 'return value ie-i'
+    console.log app
     app.task.clear()
-    app.client.emit 'return_value'
-    app.client.returnValue value, option
     window.plugins?.toast?.show "返り値: #{value}", "short", "center"
 
   cancel: ->
@@ -43,7 +47,9 @@ class HeaderView extends Marionette.ItemView
     setting: 'a.settings-button'
     logout: 'a.logout'
     name: 'a.header-title'
+    back: 'button.back-button'
   events:
+    'click @ui.back': 'back'
     "click @ui.logout": 'logout'
     'click @ui.cancel': 'cancelTask'
     'click @ui.setting': 'settings'
@@ -60,6 +66,10 @@ class HeaderView extends Marionette.ItemView
   settings: ->
     console.log 'settings'
     app.settings.show new SettingsView()
+
+  back: ->
+    app.task.clear()
+    app.router.navigate '', true
 
   logout: ->
     $.ajax
@@ -169,26 +179,51 @@ class MainView extends Marionette.LayoutView
   initialize: ->
 
   changeView: ->
-    format = @model?.get 'format'
-    viewClass = switch format
-      when "", "index"
-        NormalView
-      when "boolean", "bool"
-        BooleanView
-      when "string"
-        StringView
-      when "list"
-        ListView
-      when "number", "int"
-        NumberView
-      when "void"
-        VoidView
-      when "camera"
-        CameraView
-      else
-        NormalView
+    cid = @model.get 'cid'
     @returnview.reset()
-    @returnview.show new viewClass {model: @model}
+    if !cid?
+      @returnview.show new TodoListView()
+    else
+      app.client.accept @model.get('cid'), (err, tuple) =>
+        throw err if err
+        format = @model?.get 'format' or @model?.get('options')?.format
+        console.log @model
+        viewClass = switch format
+          when "", "index"
+            NormalView
+          when "boolean", "bool"
+            BooleanView
+          when "string"
+            StringView
+          when "list"
+            ListView
+          when "number", "int"
+            NumberView
+          when "void"
+            VoidView
+          when "camera"
+            CameraView
+          else
+            NormalView
+        @returnview.show new viewClass {model: @model}
+
+class TodoView extends Marionette.ItemView
+  template: '#todo-template'
+  events:
+    'click': 'clicked'
+  clicked: ->
+    app.router.navigate "tasks/#{@model.get('cid')}", true
+    console.log @
+
+class TodoListView extends Marionette.CollectionView
+  tagName: 'ul'
+  className: 'todo-list'
+  childView: TodoView
+
+  initialize: ->
+    console.log 'todo list view'
+    @collection = app.tasks
+    console.log @
 
 class NormalView extends BaseView
   template: '#normal-template'
@@ -319,6 +354,9 @@ class ThrowErrorView extends Marionette.ItemView
     #   console.log @
     # , 1000
     @destroy()
+
+class DoneListView
+  template: '#done-list-view'
 
 module.exports =
   Header: HeaderView
