@@ -14,11 +14,11 @@ Model = require '../model'
 
 class Router
   appRoutes:
-    'a': 'b'
+    'a/b': 'b'
 
 class Controller
   b: ->
-    consol.elog 'bbbb'
+    console.log 'bbb'
 
 app = new Marionette.Application()
 
@@ -32,7 +32,6 @@ app.addRegions
 app.router = new Router
   controller: new Controller()
 
-
 app.addInitializer ->
   @task = new Model.Task()
   @header.show new Views.Header()
@@ -40,6 +39,6 @@ app.addInitializer ->
     model: @task
   Backbone.history.start()
   $.material.init()
-
+  console.log 'hoge'
 
 app.start()
