@@ -76,7 +76,7 @@ html
         button.btn.btn-primary.btn-block.yes-button(type='button') はい
         button.btn.btn-success.btn-block.no-button(type='button') いいえ
       hr
-      a.btn.btn-warning throw error
+      a.btn.btn-warning.error-button throw error
 
     script(type="text/template", id="string-template")
       h2.text-center <%= key %>
@@ -85,7 +85,7 @@ html
         input.form-control.floating-label.string-value(type='text', data-hint='you must put string', placeholder!='<%= example %>')
         button.btn.btn-primary.btn-lg.btn-block(type="button") submit
       hr
-      a.btn.btn-warning throw error
+      a.btn.btn-warning.error-button throw error
 
     script(type="text/template", id="number-template")
       h3.text-center <%= key %>
@@ -97,16 +97,16 @@ html
             input.form-control.floating-label.input-lg.number-value(type="number", placeholder!='<%= example %>', data-hint='you must put number')
             button.btn.btn-primary.btn-lg.btn-block.submit(type="submit") submit
       hr
-      a.btn.btn-warning throw error
+      a.btn.btn-warning.error-button throw error
 
     script(type="text/template", id="list-template")
       h2.text-center <%= key %>
       h4.description <%= description %>
       <% _.each(list, function(item){ %>
-      a.btn.btn-primary.btn-lg.btn-block(href='javascript:void(0)', id!='<%= item %>') <%= item %>
+      a.btn.btn-primary.btn-lg.btn-block.item(href='javascript:void(0)', id!='<%= item %>') <%= item %>
       <% }); %>
       hr
-      a.btn.btn-warning throw error
+      a.btn.btn-warning.error-button(data-toggle='modal', data-target='#errorModal') throw error
       //- select.form-control
       //-   <% _.each(list, function(item){ %>
       //-   option<%= item %>
@@ -126,19 +126,20 @@ html
       input.camera(type="file",accept="image/*;capture=camera",id="imageFile")
 
     script(type="text/template", id="throw-error-template")
-      .modal-dialog
-        .modal-content
-          .modal-header
-            strong.text-center 命令内容は [<%= key %>] です。
-          .modal-body
-            p.description エラーの理由を文字列で入力するか、選択肢から選んでください
-            form(role="form")
-              input.form-control.string-value(type="text", style="margin-bottom: 10px")
-            select.setphrase.form-control
-              option やりたくない
-              option 型がおかしい
-              option 選択肢からは選べない
-          .modal-footer
-            button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
-            button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
+      #errorModal.modal.fade(tabIndex='-1',role='dialog', aria-labelledby='errorModalLabel', aria-hidden='true')
+        .modal-dialog
+          .modal-content
+            .modal-header
+              strong.text-center 命令内容は [<%= key %>] です。
+            .modal-body
+              p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+              form(role="form")
+                input.form-control.string-value(type="text", style="margin-bottom: 10px")
+              select.setphrase.form-control
+                option やりたくない
+                option 型がおかしい
+                option 選択肢からは選べない
+            .modal-footer
+              button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
+              button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
     script(src="./app.js")

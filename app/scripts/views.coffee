@@ -8,15 +8,12 @@ class BaseView extends Marionette.ItemView
 
   initialize: ->
 
+  ui:
+    errorButton: 'a.throw-error-button'
   events:
-    "touchstart button": "active"
-    "touchend button": "normal"
+    # "touchstart button": "active"
+    # "touchend button": "normal"
     'submit': "submitcancel"
-
-  active: (e) ->
-    $(e.currentTarget).addClass 'active'
-  normal: (e) ->
-    $(e.currentTarget).removeClass 'active'
 
   submitcancel: ->
     return false
@@ -35,6 +32,10 @@ class BaseView extends Marionette.ItemView
     app.task.clear()
     app.client.emit 'cancel_task'
     app.client.cancel cid, 'client side cancel'
+
+  error: (e) ->
+    console.log 'error view'
+    app.error.show new ThrowErrorView()
 
 class HeaderView extends Marionette.ItemView
   template: '#header-template'
@@ -142,9 +143,11 @@ class BooleanView extends BaseView
   ui:
     truebutton: 'button.yes-button'
     falsebutton: 'button.no-button'
+    errorButton: 'a.error-button'
   events:
     'click @ui.truebutton': 'returntrue'
     'click @ui.falsebutton': 'returnfalse'
+    'click @ui.errorButton': 'error'
   returntrue: ->
     @returnValue true
   returnfalse: ->
@@ -157,9 +160,11 @@ class StringView extends BaseView
   ui:
     input: 'input.string-value'
     button: 'button'
+    errorButton: 'a.error-button'
   events:
     'click @ui.button': 'returnString'
     'click @ui.input': 'onFocus'
+    'click @ui.errorButton': 'error'
 
   onRender: ->
     Backbone.$.material.input($(@ui.input))
@@ -177,10 +182,13 @@ class ListView extends BaseView
   ui:
     select: 'select'
     button: 'button'
-    a: 'a'
+    a: 'a.item'
+    errorButton: 'a.error-button'
   events:
     'click @ui.a': 'returnSelect'
     'click @ui.button': 'returnSelect'
+    'click @ui.errorButton': 'error'
+
   returnSelect: (e) ->
     value = e.target.id
     @returnValue value
@@ -193,9 +201,11 @@ class NumberView extends BaseView
     input: 'input.number-value'
     button: 'button'
     submit: 'input.submit'
+    error: 'a.error-button'
   events:
     'click @ui.button': 'returnNumber'
     'submit @ui.form': 'returnNumber'
+    'click @ui.error': 'error'
 
   onRender: ->
     Backbone.$.material.input($(@ui.input))
@@ -256,16 +266,19 @@ class ThrowErrorView extends Marionette.ItemView
     'click @ui.cancel': 'cancel'
     'click @ui.return': 'return'
   initialize: ->
+    console.log 'error init'
     @model = new Backbone.Model
       key: app.task.get 'key'
-    $(@el).css 'top', '30px'
-  onRender: ->
-    $(@el).modal('show')
+    # $(@el).css 'top', '30px'
 
-  onBeforeDestroy: ->
-    console.log arguments
-    console.log 'before destroy'
-    $(@el).modal "hide"
+  onRender: ->
+    # console.log @$el.modal
+    # $(@el).modal('show')
+
+  # onBeforeDestroy: ->
+  #   console.log arguments
+  #   console.log 'before destroy'
+  #   $(@el).modal "hide"
 
   cancel: ->
     if @ui.input.val() isnt ""
