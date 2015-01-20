@@ -1,6 +1,7 @@
 Backbone = require 'backbone'
 Marionette = require 'backbone.marionette'
 app = require './app'
+_ = require 'lodash'
 
 class BaseView extends Marionette.ItemView
   tagName: "div"
@@ -24,6 +25,7 @@ class BaseView extends Marionette.ItemView
     setTimeout ->
       app.task.clear()
       app.client.returnValue value, option
+      app.client.emit 'return_value', value
       window.plugins?.toast?.show "返り値: #{value}", "short", "center"
     , 300
 
@@ -157,8 +159,16 @@ class StringView extends BaseView
     button: 'button'
   events:
     'click @ui.button': 'returnString'
+    'click @ui.input': 'onFocus'
+
+  onRender: ->
+    Backbone.$.material.input($(@ui.input))
+
+  # onFocus: ->
+  #   Backbone.$.material.input($(@ui.input))
 
   returnString: ->
+    console.log @ui.input
     @returnValue @ui.input.val()
 
 class ListView extends BaseView
@@ -186,10 +196,17 @@ class NumberView extends BaseView
   events:
     'click @ui.button': 'returnNumber'
     'submit @ui.form': 'returnNumber'
+
+  onRender: ->
+    Backbone.$.material.input($(@ui.input))
+
   returnNumber: (e) ->
-    val = Number @ui.input.val()
+    val = parseInt @ui.input.val(), 10
     console.log val
-    @returnValue @ui.input.val() if val?
+    return false if _.isNaN(val) is true
+    if _.isNumber(val) is true
+      console.log 'ok'
+      @returnValue @ui.input.val()
     return false
 
 

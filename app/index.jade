@@ -81,8 +81,8 @@ html
     script(type="text/template", id="string-template")
       h2.text-center <%= key %>
       h4.description <%= description %>
-      .form-control-wrapper
-        input.form-control(type='text' data-hint='you must put string')
+      .form-group
+        input.form-control.floating-label.string-value(type='text', data-hint='you must put string', placeholder!='<%= example %>')
         button.btn.btn-primary.btn-lg.btn-block(type="button") submit
       hr
       a.btn.btn-warning throw error
@@ -91,9 +91,11 @@ html
       h3.text-center <%= key %>
       p.description <%= description %>
       hr
-      form.number-form(role="form")
-        input.form-control.input-lg(type="number", placeholder!='<%= example %>', data-hint='you must put number')
-        button.btn.btn-primary.btn-lg.btn-block.submit(type="submit") submit
+      form.form-horizontal.number-form(role="form")
+        fieldset
+          .form-group
+            input.form-control.floating-label.input-lg.number-value(type="number", placeholder!='<%= example %>', data-hint='you must put number')
+            button.btn.btn-primary.btn-lg.btn-block.submit(type="submit") submit
       hr
       a.btn.btn-warning throw error
 

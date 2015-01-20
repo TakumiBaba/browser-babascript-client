@@ -33,6 +33,7 @@
     "coffee-script": "https://registry.npmjs.org/coffee-script/-/coffee-script-1.8.0.tgz",
     "express": "^4.10.6",
     "jquery": "^2.1.1",
-    "webpack": "^1.4.6"
+    "webpack": "^1.4.6",
+    "lodash": "^2.4.1"
   }
 }
