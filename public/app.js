@@ -37055,10 +37055,10 @@
 	var url = __webpack_require__(27);
 	var eio = __webpack_require__(34);
 	var Socket = __webpack_require__(29);
-	var Emitter = __webpack_require__(35);
+	var Emitter = __webpack_require__(36);
 	var parser = __webpack_require__(30);
 	var on = __webpack_require__(31);
-	var bind = __webpack_require__(36);
+	var bind = __webpack_require__(35);
 	var object = __webpack_require__(37);
 	var debug = __webpack_require__(32)('socket.io-client:manager');
 
@@ -37517,10 +37517,10 @@
 	 */
 
 	var parser = __webpack_require__(30);
-	var Emitter = __webpack_require__(35);
+	var Emitter = __webpack_require__(36);
 	var toArray = __webpack_require__(38);
 	var on = __webpack_require__(31);
-	var bind = __webpack_require__(36);
+	var bind = __webpack_require__(35);
 	var debug = __webpack_require__(32)('socket.io-client:socket');
 	var hasBin = __webpack_require__(39);
 	var indexOf = __webpack_require__(40);
@@ -38509,6 +38509,35 @@
 /* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * Slice reference.
+	 */
+
+	var slice = [].slice;
+
+	/**
+	 * Bind `obj` to `fn`.
+	 *
+	 * @param {Object} obj
+	 * @param {Function|String} fn or string
+	 * @return {Function}
+	 * @api public
+	 */
+
+	module.exports = function(obj, fn){
+	  if ('string' == typeof fn) fn = obj[fn];
+	  if ('function' != typeof fn) throw new Error('bind() requires a function');
+	  var args = slice.call(arguments, 2);
+	  return function(){
+	    return fn.apply(obj, args.concat(slice.call(arguments)));
+	  }
+	};
+
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
 	/**
 	 * Expose `Emitter`.
@@ -38672,35 +38701,6 @@
 
 	Emitter.prototype.hasListeners = function(event){
 	  return !! this.listeners(event).length;
-	};
-
-
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Slice reference.
-	 */
-
-	var slice = [].slice;
-
-	/**
-	 * Bind `obj` to `fn`.
-	 *
-	 * @param {Object} obj
-	 * @param {Function|String} fn or string
-	 * @return {Function}
-	 * @api public
-	 */
-
-	module.exports = function(obj, fn){
-	  if ('string' == typeof fn) fn = obj[fn];
-	  if ('function' != typeof fn) throw new Error('bind() requires a function');
-	  var args = slice.call(arguments, 2);
-	  return function(){
-	    return fn.apply(obj, args.concat(slice.call(arguments)));
-	  }
 	};
 
 
@@ -40283,7 +40283,7 @@
 	 */
 
 	var transports = __webpack_require__(52);
-	var Emitter = __webpack_require__(35);
+	var Emitter = __webpack_require__(36);
 	var debug = __webpack_require__(32)('engine.io-client:socket');
 	var index = __webpack_require__(40);
 	var parser = __webpack_require__(53);
@@ -40946,7 +40946,7 @@
 	 */
 
 	var parser = __webpack_require__(53);
-	var Emitter = __webpack_require__(35);
+	var Emitter = __webpack_require__(36);
 
 	/**
 	 * Module exports.
@@ -41904,7 +41904,7 @@
 
 	var XMLHttpRequest = __webpack_require__(57);
 	var Polling = __webpack_require__(62);
-	var Emitter = __webpack_require__(35);
+	var Emitter = __webpack_require__(36);
 	var inherit = __webpack_require__(69);
 	var debug = __webpack_require__(32)('engine.io-client:polling-xhr');
 
