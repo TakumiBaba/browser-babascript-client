@@ -5,15 +5,15 @@ _ = require 'lodash'
 
 class BaseView extends Marionette.ItemView
   tagName: "div"
-
-  initialize: ->
-
   ui:
     errorButton: 'a.throw-error-button'
   events:
     # "touchstart button": "active"
     # "touchend button": "normal"
-    'submit': "submitcancel"
+    # 'submit': "submitcancel"
+    'click @ui.errorSubmit': 'throwError'
+
+  initialize: ->
 
   submitcancel: ->
     return false
@@ -35,7 +35,19 @@ class BaseView extends Marionette.ItemView
 
   error: (e) ->
     console.log 'error view'
-    app.error.show new ThrowErrorView()
+    console.log app.main.currentView.returnview.currentView.$el.find('.error').removeClass 'fade'
+    # console.log app.main.currentView.returnview.currentView.show new ThrowErrorView()
+
+  throwError: ->
+    console.log 'throw error'
+    cid = app.task.get 'cid'
+    input = app.main.currentView.returnview.currentView.$el.find('.error input').val()
+    select = app.main.currentView.returnview.currentView.$el.find('.error select').val()
+    reason = if input is '' then select else input
+    app.task.clear()
+    app.client.emit 'cancel_task'
+    app.client.cancel reason
+    # app.client.cancel cid, 'client side cancel'
 
 class HeaderView extends Marionette.ItemView
   template: '#header-template'
@@ -140,14 +152,17 @@ class NormalView extends BaseView
 class BooleanView extends BaseView
   template: '#boolean-template'
   className: 'boolean-page'
+  region: 'error': '.error'
   ui:
     truebutton: 'button.yes-button'
     falsebutton: 'button.no-button'
     errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.truebutton': 'returntrue'
     'click @ui.falsebutton': 'returnfalse'
     'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
   returntrue: ->
     @returnValue true
   returnfalse: ->
@@ -159,12 +174,14 @@ class StringView extends BaseView
   className: 'string-page'
   ui:
     input: 'input.string-value'
-    button: 'button'
+    button: 'button.submit'
     errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnString'
     'click @ui.input': 'onFocus'
     'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
 
   onRender: ->
     Backbone.$.material.input($(@ui.input))
@@ -184,10 +201,12 @@ class ListView extends BaseView
     button: 'button'
     a: 'a.item'
     errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.a': 'returnSelect'
     'click @ui.button': 'returnSelect'
     'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
 
   returnSelect: (e) ->
     value = e.target.id
@@ -199,13 +218,15 @@ class NumberView extends BaseView
   ui:
     form: 'form.number-form'
     input: 'input.number-value'
-    button: 'button'
+    button: 'button.return-submit'
     submit: 'input.submit'
     error: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnNumber'
     'submit @ui.form': 'returnNumber'
     'click @ui.error': 'error'
+    'click @ui.errorSubmit': 'throwError'
 
   onRender: ->
     Backbone.$.material.input($(@ui.input))
@@ -225,8 +246,10 @@ class VoidView extends BaseView
   className: 'void-page'
   ui:
     button: 'button.void'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnVoid'
+    'click @ui.errorSubmit': 'throwError'
   returnVoid: ->
     @returnValue 'true'
 
@@ -253,10 +276,12 @@ class Task extends Backbone.Model
     @$el.html @template()
 
 
+
 class ThrowErrorView extends Marionette.ItemView
+  el: '#error'
   template: '#throw-error-template'
-  className: 'throw-error-page modal fade'
-  style: 'top: 100px'
+  # className: 'throw-error-page modal fade'
+  # style: 'top: 100px'
   ui:
     cancel: 'button.cancel'
     return: 'button.return'
@@ -272,6 +297,7 @@ class ThrowErrorView extends Marionette.ItemView
     # $(@el).css 'top', '30px'
 
   onRender: ->
+    $("#errorModal").modal 'show'
     # console.log @$el.modal
     # $(@el).modal('show')
 

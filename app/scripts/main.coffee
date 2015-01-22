@@ -33,6 +33,8 @@ app.addInitializer ->
     window.localStorage?.setItem 'task', JSON.stringify result
   @client.on "return_value", (value) =>
     window.localStorage?.setItem 'task', ""
+  @client.on "cancel_task", (value) =>
+    window.localStorage?.setItem 'task', ""
   # @client.set "logger", new Logger()
   Backbone.history.start()
 
