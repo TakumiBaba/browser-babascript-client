@@ -1,36 +1,34 @@
 Backbone = require 'backbone'
 Marionette = require 'backbone.marionette'
-global.jQuery = $ = require 'jquery'
-Bootstrap = require 'bootstrap/dist/js/bootstrap'
 app = require './app'
+_ = require 'lodash'
 
 class BaseView extends Marionette.ItemView
   tagName: "div"
+  ui:
+    errorButton: 'a.throw-error-button'
+  events:
+    # "touchstart button": "active"
+    # "touchend button": "normal"
+    # 'submit': "submitcancel"
+    'click @ui.errorSubmit': 'throwError'
 
   initialize: ->
-
-  events:
-    "touchstart button": "active"
-    "touchend button": "normal"
-    'submit': "submitcancel"
-
-  active: (e) ->
-    $(e.currentTarget).addClass 'active'
-  normal: (e) ->
-    $(e.currentTarget).removeClass 'active'
 
   submitcancel: ->
     return false
 
   returnValue: (value, option={})->
     # app.client.emit 'return_value'
-    cid = app.task.get 'cid'
-    app.client.returnValue value, cid, option
-    app.tasks.remove app.tasks.where {cid: cid}
-    console.log 'return value ie-i'
-    console.log app
-    app.task.clear()
-    window.plugins?.toast?.show "返り値: #{value}", "short", "center"
+    setTimeout ->
+      cid = app.task.get 'cid'
+      app.client.returnValue value, cid, option
+      app.tasks.remove app.tasks.where {cid: cid}
+      console.log 'return value ie-i'
+      console.log app
+      app.task.clear()
+      window.plugins?.toast?.show "返り値: #{value}", "short", "center"
+    , 300
 
   cancel: ->
     console.log app
@@ -38,6 +36,22 @@ class BaseView extends Marionette.ItemView
     app.task.clear()
     app.client.emit 'cancel_task'
     app.client.cancel cid, 'client side cancel'
+
+  error: (e) ->
+    console.log 'error view'
+    console.log app.main.currentView.returnview.currentView.$el.find('.error').removeClass 'fade'
+    # console.log app.main.currentView.returnview.currentView.show new ThrowErrorView()
+
+  throwError: ->
+    console.log 'throw error'
+    cid = app.task.get 'cid'
+    input = app.main.currentView.returnview.currentView.$el.find('.error input').val()
+    select = app.main.currentView.returnview.currentView.$el.find('.error select').val()
+    reason = if input is '' then select else input
+    app.task.clear()
+    app.client.emit 'cancel_task'
+    app.client.cancel reason
+    # app.client.cancel cid, 'client side cancel'
 
 class HeaderView extends Marionette.ItemView
   template: '#header-template'
@@ -111,65 +125,6 @@ class SettingsView extends Marionette.ItemView
     # app.settings.close()
     # @$el.modal()
 
-class LoginView extends Marionette.ItemView
-  template: '#login-template'
-  className: 'modal-dialog'
-  style: ''
-  ui:
-    username: 'input#username'
-    password: 'input#password'
-    login: 'button.login'
-    signup: 'button.signup'
-  events:
-    "click @ui.login": 'login'
-    "click @ui.signup": 'signup'
-  login: ->
-    username = @ui.username.val()
-    password = @ui.password.val()
-    $.ajax
-      type: "POST"
-      url: "#{app.API}/api/session/login"
-      data:
-        username: username
-        password: password
-      xhrFields:
-        withCredentials: true
-    .done (res)=>
-      window.localStorage.setItem "username", username
-      app.router.navigate "/", true
-      window.location.reload()
-    .error ->
-      window.alert "invalid username or password "
-  signup: ->
-    console.log 'singnup'
-    username = @ui.username.val()
-    password = @ui.password.val()
-    $.ajax
-      type: "POST"
-      url: "#{app.API}/api/user/new"
-      data:
-        username: username
-        password: password
-      xhrFields:
-        withCredentials: true
-    .done (res)=>
-      window.localStorage.setItem "username", username
-      $.ajax
-        type: "POST"
-        url: "#{app.API}/api/session/login"
-        data:
-          username: username
-          password: password
-        xhrFields:
-          withCredentials: true
-      .done (res) ->
-        app.router.navigate "/", true
-        window.location.reload()
-      .error (error)->
-        window.alert "invalid username or password "
-    .error ->
-      window.alert "invalid username or password "
-
 class MainView extends Marionette.LayoutView
   template: '#main-template'
   regions:
@@ -232,26 +187,45 @@ class NormalView extends BaseView
 class BooleanView extends BaseView
   template: '#boolean-template'
   className: 'boolean-page'
+  region: 'error': '.error'
   ui:
-    truebutton: 'button.true'
-    falsebutton: 'button.false'
+    truebutton: 'button.yes-button'
+    falsebutton: 'button.no-button'
+    errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.truebutton': 'returntrue'
     'click @ui.falsebutton': 'returnfalse'
+    'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
   returntrue: ->
     @returnValue true
   returnfalse: ->
     @returnValue false
 
+# inputの中身が取れない
 class StringView extends BaseView
   template: '#string-template'
   className: 'string-page'
   ui:
     input: 'input.string-value'
-    button: 'button'
+    button: 'button.submit'
+    errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnString'
+    'click @ui.input': 'onFocus'
+    'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
+
+  onRender: ->
+    Backbone.$.material.input($(@ui.input))
+
+  # onFocus: ->
+  #   Backbone.$.material.input($(@ui.input))
+
   returnString: ->
+    console.log @ui.input
     @returnValue @ui.input.val()
 
 class ListView extends BaseView
@@ -260,31 +234,57 @@ class ListView extends BaseView
   ui:
     select: 'select'
     button: 'button'
+    a: 'a.item'
+    errorButton: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
+    'click @ui.a': 'returnSelect'
     'click @ui.button': 'returnSelect'
-  returnSelect: ->
-    value = @ui.select.val()
-    console.log value
+    'click @ui.errorButton': 'error'
+    'click @ui.errorSubmit': 'throwError'
+
+  returnSelect: (e) ->
+    value = e.target.id
     @returnValue value
 
 class NumberView extends BaseView
   template: '#number-template'
   className: 'number-page'
   ui:
+    form: 'form.number-form'
     input: 'input.number-value'
-    button: 'button'
+    button: 'button.return-submit'
+    submit: 'input.submit'
+    error: 'a.error-button'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnNumber'
-  returnNumber: ->
-    @returnValue @ui.input.val()
+    'submit @ui.form': 'returnNumber'
+    'click @ui.error': 'error'
+    'click @ui.errorSubmit': 'throwError'
+
+  onRender: ->
+    Backbone.$.material.input($(@ui.input))
+
+  returnNumber: (e) ->
+    val = parseInt @ui.input.val(), 10
+    console.log val
+    return false if _.isNaN(val) is true
+    if _.isNumber(val) is true
+      console.log 'ok'
+      @returnValue @ui.input.val()
+    return false
+
 
 class VoidView extends BaseView
   template: '#void-template'
   className: 'void-page'
   ui:
     button: 'button.void'
+    errorSubmit: 'button.error-submit'
   events:
     'click @ui.button': 'returnVoid'
+    'click @ui.errorSubmit': 'throwError'
   returnVoid: ->
     @returnValue 'true'
 
@@ -311,10 +311,12 @@ class Task extends Backbone.Model
     @$el.html @template()
 
 
+
 class ThrowErrorView extends Marionette.ItemView
+  el: '#error'
   template: '#throw-error-template'
-  className: 'throw-error-page modal fade'
-  style: 'top: 100px'
+  # className: 'throw-error-page modal fade'
+  # style: 'top: 100px'
   ui:
     cancel: 'button.cancel'
     return: 'button.return'
@@ -324,16 +326,20 @@ class ThrowErrorView extends Marionette.ItemView
     'click @ui.cancel': 'cancel'
     'click @ui.return': 'return'
   initialize: ->
+    console.log 'error init'
     @model = new Backbone.Model
       key: app.task.get 'key'
-    $(@el).css 'top', '30px'
-  onRender: ->
-    $(@el).modal('show')
+    # $(@el).css 'top', '30px'
 
-  onBeforeDestroy: ->
-    console.log arguments
-    console.log 'before destroy'
-    $(@el).modal "hide"
+  onRender: ->
+    $("#errorModal").modal 'show'
+    # console.log @$el.modal
+    # $(@el).modal('show')
+
+  # onBeforeDestroy: ->
+  #   console.log arguments
+  #   console.log 'before destroy'
+  #   $(@el).modal "hide"
 
   cancel: ->
     if @ui.input.val() isnt ""
@@ -369,6 +375,5 @@ module.exports =
   Number: NumberView
   Void: VoidView
   Task: Task
-  Login: LoginView
   Settings: SettingsView
   ThrowError: ThrowErrorView

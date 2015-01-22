@@ -1,8 +1,14 @@
 window.Backbone = Backbone = require 'backbone'
+Backbone = require 'backbone'
+global.jQuery = global.$ = $ = require 'jquery'
+Bootstrap = require 'bootstrap-material-design/dist/js/material'
+material = require 'bootstrap-material-design/scripts/material'
+ripples = require 'bootstrap-material-design/scripts/ripples'
+
 Views = require './views'
 Client = require 'babascript-client'
 Adapter = require 'babascript-linda-adapter'
-Logger = require 'babascript-plugin-logger'
+# Logger = require 'babascript-plugin-logger'
 Model = require './model'
 Application = require('./app')
 
@@ -38,12 +44,9 @@ Application.addInitializer ->
   #   window.localStorage?.setItem 'task', JSON.stringify result
   @client.on "return_value", (tuple) =>
     window.localStorage?.setItem 'task', ""
-  @client.set "logger", new Logger()
   console.log 'start....'
-  task = window.localStorage?.getItem 'task'
-  if task isnt ''
-    task = JSON.parse task
-    @client.addDefaultTask {data: task}
-
   Backbone.history.start()
+
+  $.material.init()
+
 Application.start()
