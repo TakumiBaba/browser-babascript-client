@@ -194,4 +194,11 @@ html
         .panel-footer
           button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
           button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
+    script#todo-list-template(type='text/template')
+      ul.todo-list
+    script(type='text/template', id='todo-template')
+      li.todo-item
+        .well.col-xs-12
+          h5 <%= key %>
+
     script(src="./app.js")

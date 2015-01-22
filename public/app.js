@@ -46842,7 +46842,7 @@
 	 * @api public
 	 *
 	 */
-	module.exports.parser = __webpack_require__(97);
+	module.exports.parser = __webpack_require__(98);
 
 
 /***/ },
@@ -46857,7 +46857,7 @@
 	var sliceBuffer = __webpack_require__(93);
 	var base64encoder = __webpack_require__(99);
 	var after = __webpack_require__(94);
-	var utf8 = __webpack_require__(98);
+	var utf8 = __webpack_require__(97);
 
 	/**
 	 * Check if we are running an android browser. That requires us to use
@@ -49449,7 +49449,7 @@
 	var Emitter = __webpack_require__(64);
 	var debug = __webpack_require__(59)('engine.io-client:socket');
 	var index = __webpack_require__(69);
-	var parser = __webpack_require__(97);
+	var parser = __webpack_require__(98);
 	var parseuri = __webpack_require__(102);
 	var parsejson = __webpack_require__(103);
 	var parseqs = __webpack_require__(104);
@@ -49554,7 +49554,7 @@
 	Socket.Socket = Socket;
 	Socket.Transport = __webpack_require__(92);
 	Socket.transports = __webpack_require__(96);
-	Socket.parser = __webpack_require__(97);
+	Socket.parser = __webpack_require__(98);
 
 	/**
 	 * Creates transport of the given type.
@@ -50376,7 +50376,7 @@
 	 * Module dependencies.
 	 */
 
-	var parser = __webpack_require__(97);
+	var parser = __webpack_require__(98);
 	var Emitter = __webpack_require__(64);
 
 	/**
@@ -50713,13 +50713,257 @@
 /* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! http://mths.be/utf8js v2.0.0 by @mathias */
+	;(function(root) {
+
+		// Detect free variables `exports`
+		var freeExports = typeof exports == 'object' && exports;
+
+		// Detect free variable `module`
+		var freeModule = typeof module == 'object' && module &&
+			module.exports == freeExports && module;
+
+		// Detect free variable `global`, from Node.js or Browserified code,
+		// and use it as `root`
+		var freeGlobal = typeof global == 'object' && global;
+		if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
+			root = freeGlobal;
+		}
+
+		/*--------------------------------------------------------------------------*/
+
+		var stringFromCharCode = String.fromCharCode;
+
+		// Taken from http://mths.be/punycode
+		function ucs2decode(string) {
+			var output = [];
+			var counter = 0;
+			var length = string.length;
+			var value;
+			var extra;
+			while (counter < length) {
+				value = string.charCodeAt(counter++);
+				if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+					// high surrogate, and there is a next character
+					extra = string.charCodeAt(counter++);
+					if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+						output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+					} else {
+						// unmatched surrogate; only append this code unit, in case the next
+						// code unit is the high surrogate of a surrogate pair
+						output.push(value);
+						counter--;
+					}
+				} else {
+					output.push(value);
+				}
+			}
+			return output;
+		}
+
+		// Taken from http://mths.be/punycode
+		function ucs2encode(array) {
+			var length = array.length;
+			var index = -1;
+			var value;
+			var output = '';
+			while (++index < length) {
+				value = array[index];
+				if (value > 0xFFFF) {
+					value -= 0x10000;
+					output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+					value = 0xDC00 | value & 0x3FF;
+				}
+				output += stringFromCharCode(value);
+			}
+			return output;
+		}
+
+		/*--------------------------------------------------------------------------*/
+
+		function createByte(codePoint, shift) {
+			return stringFromCharCode(((codePoint >> shift) & 0x3F) | 0x80);
+		}
+
+		function encodeCodePoint(codePoint) {
+			if ((codePoint & 0xFFFFFF80) == 0) { // 1-byte sequence
+				return stringFromCharCode(codePoint);
+			}
+			var symbol = '';
+			if ((codePoint & 0xFFFFF800) == 0) { // 2-byte sequence
+				symbol = stringFromCharCode(((codePoint >> 6) & 0x1F) | 0xC0);
+			}
+			else if ((codePoint & 0xFFFF0000) == 0) { // 3-byte sequence
+				symbol = stringFromCharCode(((codePoint >> 12) & 0x0F) | 0xE0);
+				symbol += createByte(codePoint, 6);
+			}
+			else if ((codePoint & 0xFFE00000) == 0) { // 4-byte sequence
+				symbol = stringFromCharCode(((codePoint >> 18) & 0x07) | 0xF0);
+				symbol += createByte(codePoint, 12);
+				symbol += createByte(codePoint, 6);
+			}
+			symbol += stringFromCharCode((codePoint & 0x3F) | 0x80);
+			return symbol;
+		}
+
+		function utf8encode(string) {
+			var codePoints = ucs2decode(string);
+
+			// console.log(JSON.stringify(codePoints.map(function(x) {
+			// 	return 'U+' + x.toString(16).toUpperCase();
+			// })));
+
+			var length = codePoints.length;
+			var index = -1;
+			var codePoint;
+			var byteString = '';
+			while (++index < length) {
+				codePoint = codePoints[index];
+				byteString += encodeCodePoint(codePoint);
+			}
+			return byteString;
+		}
+
+		/*--------------------------------------------------------------------------*/
+
+		function readContinuationByte() {
+			if (byteIndex >= byteCount) {
+				throw Error('Invalid byte index');
+			}
+
+			var continuationByte = byteArray[byteIndex] & 0xFF;
+			byteIndex++;
+
+			if ((continuationByte & 0xC0) == 0x80) {
+				return continuationByte & 0x3F;
+			}
+
+			// If we end up here, it’s not a continuation byte
+			throw Error('Invalid continuation byte');
+		}
+
+		function decodeSymbol() {
+			var byte1;
+			var byte2;
+			var byte3;
+			var byte4;
+			var codePoint;
+
+			if (byteIndex > byteCount) {
+				throw Error('Invalid byte index');
+			}
+
+			if (byteIndex == byteCount) {
+				return false;
+			}
+
+			// Read first byte
+			byte1 = byteArray[byteIndex] & 0xFF;
+			byteIndex++;
+
+			// 1-byte sequence (no continuation bytes)
+			if ((byte1 & 0x80) == 0) {
+				return byte1;
+			}
+
+			// 2-byte sequence
+			if ((byte1 & 0xE0) == 0xC0) {
+				var byte2 = readContinuationByte();
+				codePoint = ((byte1 & 0x1F) << 6) | byte2;
+				if (codePoint >= 0x80) {
+					return codePoint;
+				} else {
+					throw Error('Invalid continuation byte');
+				}
+			}
+
+			// 3-byte sequence (may include unpaired surrogates)
+			if ((byte1 & 0xF0) == 0xE0) {
+				byte2 = readContinuationByte();
+				byte3 = readContinuationByte();
+				codePoint = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
+				if (codePoint >= 0x0800) {
+					return codePoint;
+				} else {
+					throw Error('Invalid continuation byte');
+				}
+			}
+
+			// 4-byte sequence
+			if ((byte1 & 0xF8) == 0xF0) {
+				byte2 = readContinuationByte();
+				byte3 = readContinuationByte();
+				byte4 = readContinuationByte();
+				codePoint = ((byte1 & 0x0F) << 0x12) | (byte2 << 0x0C) |
+					(byte3 << 0x06) | byte4;
+				if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
+					return codePoint;
+				}
+			}
+
+			throw Error('Invalid UTF-8 detected');
+		}
+
+		var byteArray;
+		var byteCount;
+		var byteIndex;
+		function utf8decode(byteString) {
+			byteArray = ucs2decode(byteString);
+			byteCount = byteArray.length;
+			byteIndex = 0;
+			var codePoints = [];
+			var tmp;
+			while ((tmp = decodeSymbol()) !== false) {
+				codePoints.push(tmp);
+			}
+			return ucs2encode(codePoints);
+		}
+
+		/*--------------------------------------------------------------------------*/
+
+		var utf8 = {
+			'version': '2.0.0',
+			'encode': utf8encode,
+			'decode': utf8decode
+		};
+
+		// Some AMD build optimizers, like r.js, check for specific condition patterns
+		// like the following:
+		if (
+			true
+		) {
+			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+				return utf8;
+			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		}	else if (freeExports && !freeExports.nodeType) {
+			if (freeModule) { // in Node.js or RingoJS v0.8.0+
+				freeModule.exports = utf8;
+			} else { // in Narwhal or RingoJS v0.7.0-
+				var object = {};
+				var hasOwnProperty = object.hasOwnProperty;
+				for (var key in utf8) {
+					hasOwnProperty.call(utf8, key) && (freeExports[key] = utf8[key]);
+				}
+			}
+		} else { // in Rhino or a web browser
+			root.utf8 = utf8;
+		}
+
+	}(this));
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module), (function() { return this; }())))
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies.
 	 */
 
 	var keys = __webpack_require__(110);
 	var sliceBuffer = __webpack_require__(112);
-	var base64encoder = __webpack_require__(117);
+	var base64encoder = __webpack_require__(119);
 	var after = __webpack_require__(113);
 	var utf8 = __webpack_require__(115);
 
@@ -51283,250 +51527,6 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 98 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! http://mths.be/utf8js v2.0.0 by @mathias */
-	;(function(root) {
-
-		// Detect free variables `exports`
-		var freeExports = typeof exports == 'object' && exports;
-
-		// Detect free variable `module`
-		var freeModule = typeof module == 'object' && module &&
-			module.exports == freeExports && module;
-
-		// Detect free variable `global`, from Node.js or Browserified code,
-		// and use it as `root`
-		var freeGlobal = typeof global == 'object' && global;
-		if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-			root = freeGlobal;
-		}
-
-		/*--------------------------------------------------------------------------*/
-
-		var stringFromCharCode = String.fromCharCode;
-
-		// Taken from http://mths.be/punycode
-		function ucs2decode(string) {
-			var output = [];
-			var counter = 0;
-			var length = string.length;
-			var value;
-			var extra;
-			while (counter < length) {
-				value = string.charCodeAt(counter++);
-				if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-					// high surrogate, and there is a next character
-					extra = string.charCodeAt(counter++);
-					if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-						output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-					} else {
-						// unmatched surrogate; only append this code unit, in case the next
-						// code unit is the high surrogate of a surrogate pair
-						output.push(value);
-						counter--;
-					}
-				} else {
-					output.push(value);
-				}
-			}
-			return output;
-		}
-
-		// Taken from http://mths.be/punycode
-		function ucs2encode(array) {
-			var length = array.length;
-			var index = -1;
-			var value;
-			var output = '';
-			while (++index < length) {
-				value = array[index];
-				if (value > 0xFFFF) {
-					value -= 0x10000;
-					output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-					value = 0xDC00 | value & 0x3FF;
-				}
-				output += stringFromCharCode(value);
-			}
-			return output;
-		}
-
-		/*--------------------------------------------------------------------------*/
-
-		function createByte(codePoint, shift) {
-			return stringFromCharCode(((codePoint >> shift) & 0x3F) | 0x80);
-		}
-
-		function encodeCodePoint(codePoint) {
-			if ((codePoint & 0xFFFFFF80) == 0) { // 1-byte sequence
-				return stringFromCharCode(codePoint);
-			}
-			var symbol = '';
-			if ((codePoint & 0xFFFFF800) == 0) { // 2-byte sequence
-				symbol = stringFromCharCode(((codePoint >> 6) & 0x1F) | 0xC0);
-			}
-			else if ((codePoint & 0xFFFF0000) == 0) { // 3-byte sequence
-				symbol = stringFromCharCode(((codePoint >> 12) & 0x0F) | 0xE0);
-				symbol += createByte(codePoint, 6);
-			}
-			else if ((codePoint & 0xFFE00000) == 0) { // 4-byte sequence
-				symbol = stringFromCharCode(((codePoint >> 18) & 0x07) | 0xF0);
-				symbol += createByte(codePoint, 12);
-				symbol += createByte(codePoint, 6);
-			}
-			symbol += stringFromCharCode((codePoint & 0x3F) | 0x80);
-			return symbol;
-		}
-
-		function utf8encode(string) {
-			var codePoints = ucs2decode(string);
-
-			// console.log(JSON.stringify(codePoints.map(function(x) {
-			// 	return 'U+' + x.toString(16).toUpperCase();
-			// })));
-
-			var length = codePoints.length;
-			var index = -1;
-			var codePoint;
-			var byteString = '';
-			while (++index < length) {
-				codePoint = codePoints[index];
-				byteString += encodeCodePoint(codePoint);
-			}
-			return byteString;
-		}
-
-		/*--------------------------------------------------------------------------*/
-
-		function readContinuationByte() {
-			if (byteIndex >= byteCount) {
-				throw Error('Invalid byte index');
-			}
-
-			var continuationByte = byteArray[byteIndex] & 0xFF;
-			byteIndex++;
-
-			if ((continuationByte & 0xC0) == 0x80) {
-				return continuationByte & 0x3F;
-			}
-
-			// If we end up here, it’s not a continuation byte
-			throw Error('Invalid continuation byte');
-		}
-
-		function decodeSymbol() {
-			var byte1;
-			var byte2;
-			var byte3;
-			var byte4;
-			var codePoint;
-
-			if (byteIndex > byteCount) {
-				throw Error('Invalid byte index');
-			}
-
-			if (byteIndex == byteCount) {
-				return false;
-			}
-
-			// Read first byte
-			byte1 = byteArray[byteIndex] & 0xFF;
-			byteIndex++;
-
-			// 1-byte sequence (no continuation bytes)
-			if ((byte1 & 0x80) == 0) {
-				return byte1;
-			}
-
-			// 2-byte sequence
-			if ((byte1 & 0xE0) == 0xC0) {
-				var byte2 = readContinuationByte();
-				codePoint = ((byte1 & 0x1F) << 6) | byte2;
-				if (codePoint >= 0x80) {
-					return codePoint;
-				} else {
-					throw Error('Invalid continuation byte');
-				}
-			}
-
-			// 3-byte sequence (may include unpaired surrogates)
-			if ((byte1 & 0xF0) == 0xE0) {
-				byte2 = readContinuationByte();
-				byte3 = readContinuationByte();
-				codePoint = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
-				if (codePoint >= 0x0800) {
-					return codePoint;
-				} else {
-					throw Error('Invalid continuation byte');
-				}
-			}
-
-			// 4-byte sequence
-			if ((byte1 & 0xF8) == 0xF0) {
-				byte2 = readContinuationByte();
-				byte3 = readContinuationByte();
-				byte4 = readContinuationByte();
-				codePoint = ((byte1 & 0x0F) << 0x12) | (byte2 << 0x0C) |
-					(byte3 << 0x06) | byte4;
-				if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
-					return codePoint;
-				}
-			}
-
-			throw Error('Invalid UTF-8 detected');
-		}
-
-		var byteArray;
-		var byteCount;
-		var byteIndex;
-		function utf8decode(byteString) {
-			byteArray = ucs2decode(byteString);
-			byteCount = byteArray.length;
-			byteIndex = 0;
-			var codePoints = [];
-			var tmp;
-			while ((tmp = decodeSymbol()) !== false) {
-				codePoints.push(tmp);
-			}
-			return ucs2encode(codePoints);
-		}
-
-		/*--------------------------------------------------------------------------*/
-
-		var utf8 = {
-			'version': '2.0.0',
-			'encode': utf8encode,
-			'decode': utf8decode
-		};
-
-		// Some AMD build optimizers, like r.js, check for specific condition patterns
-		// like the following:
-		if (
-			true
-		) {
-			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-				return utf8;
-			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-		}	else if (freeExports && !freeExports.nodeType) {
-			if (freeModule) { // in Node.js or RingoJS v0.8.0+
-				freeModule.exports = utf8;
-			} else { // in Narwhal or RingoJS v0.7.0-
-				var object = {};
-				var hasOwnProperty = object.hasOwnProperty;
-				for (var key in utf8) {
-					hasOwnProperty.call(utf8, key) && (freeExports[key] = utf8[key]);
-				}
-			}
-		} else { // in Rhino or a web browser
-			root.utf8 = utf8;
-		}
-
-	}(this));
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module), (function() { return this; }())))
-
-/***/ },
 /* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -51812,7 +51812,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	// browser shim for xmlhttprequest module
-	var hasCORS = __webpack_require__(118);
+	var hasCORS = __webpack_require__(117);
 
 	module.exports = function(opts) {
 	  var xdomain = opts.xdomain;
@@ -51860,7 +51860,7 @@
 	var XMLHttpRequest = __webpack_require__(106);
 	var Polling = __webpack_require__(111);
 	var Emitter = __webpack_require__(64);
-	var inherit = __webpack_require__(119);
+	var inherit = __webpack_require__(118);
 	var debug = __webpack_require__(59)('engine.io-client:polling-xhr');
 
 	/**
@@ -52217,7 +52217,7 @@
 	 */
 
 	var Polling = __webpack_require__(111);
-	var inherit = __webpack_require__(119);
+	var inherit = __webpack_require__(118);
 
 	/**
 	 * Module exports.
@@ -52455,9 +52455,9 @@
 	 */
 
 	var Transport = __webpack_require__(92);
-	var parser = __webpack_require__(97);
+	var parser = __webpack_require__(98);
 	var parseqs = __webpack_require__(104);
-	var inherit = __webpack_require__(119);
+	var inherit = __webpack_require__(118);
 	var debug = __webpack_require__(59)('engine.io-client:websocket');
 
 	/**
@@ -52716,8 +52716,8 @@
 
 	var Transport = __webpack_require__(92);
 	var parseqs = __webpack_require__(104);
-	var parser = __webpack_require__(97);
-	var inherit = __webpack_require__(119);
+	var parser = __webpack_require__(98);
+	var inherit = __webpack_require__(118);
 	var debug = __webpack_require__(59)('engine.io-client:polling');
 
 	/**
@@ -53344,6 +53344,47 @@
 /* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	/**
+	 * Module dependencies.
+	 */
+
+	var global = __webpack_require__(121);
+
+	/**
+	 * Module exports.
+	 *
+	 * Logic borrowed from Modernizr:
+	 *
+	 *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+	 */
+
+	try {
+	  module.exports = 'XMLHttpRequest' in global &&
+	    'withCredentials' in new global.XMLHttpRequest();
+	} catch (err) {
+	  // if XMLHttp support is disabled in IE then it will throw
+	  // when trying to create
+	  module.exports = false;
+	}
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	module.exports = function(a, b){
+	  var fn = function(){};
+	  fn.prototype = b.prototype;
+	  a.prototype = new fn;
+	  a.prototype.constructor = a;
+	};
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/*
 	 * base64-arraybuffer
 	 * https://github.com/niklasvh/base64-arraybuffer
@@ -53404,47 +53445,6 @@
 	  };
 	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-
-/***/ },
-/* 118 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * Module dependencies.
-	 */
-
-	var global = __webpack_require__(121);
-
-	/**
-	 * Module exports.
-	 *
-	 * Logic borrowed from Modernizr:
-	 *
-	 *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
-	 */
-
-	try {
-	  module.exports = 'XMLHttpRequest' in global &&
-	    'withCredentials' in new global.XMLHttpRequest();
-	} catch (err) {
-	  // if XMLHttp support is disabled in IE then it will throw
-	  // when trying to create
-	  module.exports = false;
-	}
-
-
-/***/ },
-/* 119 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	module.exports = function(a, b){
-	  var fn = function(){};
-	  fn.prototype = b.prototype;
-	  a.prototype = new fn;
-	  a.prototype.constructor = a;
-	};
 
 /***/ },
 /* 120 */
