@@ -39,7 +39,7 @@ app.addInitializer ->
   Backbone.history.start()
 
   task = window.localStorage?.getItem 'task'
-  if task isnt ''
+  if task isnt '' and task isnt null
     console.log task
     task = JSON.parse task
     @client.getTask null, {data: task}
