@@ -8,7 +8,7 @@ html
     link(rel='stylesheet', href='./main.css')
   body
     #header.navbar.navbar-default(role="navigation")
-    #main
+    #main.container
     #footer
     #settings
     #login
@@ -53,7 +53,9 @@ html
           button.signup.btn.btn-info(type="button") サインアップ
 
     script(type="text/template", id="main-template")
-      #returnview
+      #returnview.row
+        
+          
 
     script(type="text/template", id="normal-template")
       h3.text-center.text-center 命令を待ってください
@@ -124,7 +126,7 @@ html
       ul.todo-list
     script(type='text/template', id='todo-template')
       li.todo-item
-        .jumbotron
+        .well.col-xs-12
           h5 <%= key %>
     script(src="./app.js")
       
