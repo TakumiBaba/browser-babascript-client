@@ -17,6 +17,15 @@ html
       .btn-group.pull-left
         button.btn.btn-default.back-button(type='button' \, style="margin-top: 10px") back
       a.header-title.navbar-brand.text-center babascript
+      //- ul.nav.navbar-nav.navbar-right
+      //-   li.dropdown
+      //-     a.dropdown-toggle(data-toggle='dropdown',aria-expanded='false',href='javascript:void(0)')
+      //-       | menu
+      //-       b.caret
+      //-       .ripple-wrapper
+      //-     ul.dropdown-menu
+      //-       li: a.cancel-button キャンセル
+      //-       li: a.settings-button 設定
       .btn-group.pull-right
         button.btn.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", style="margin-top: 10px")
           メニュー
@@ -54,50 +63,115 @@ html
 
     script(type="text/template", id="main-template")
       #returnview.row
-        
-          
 
     script(type="text/template", id="normal-template")
       h3.text-center.text-center 命令を待ってください
 
     script(type="text/template", id="boolean-template")
-      h3.text-center <%= key %>
-      p.description <%= description %>
+      h2.text-center <%= key %>
+      h4.description <%= description %>
       hr
-      button.true.btn.btn-primary.btn-block(type="button") はい
-      button.false.btn.btn-danger.btn-block(type="button") いいえ
+      p.bs-component
+        button.btn.btn-primary.btn-block.yes-button(type='button') はい
+        button.btn.btn-success.btn-block.no-button(type='button') いいえ
+      hr
+      a.btn.btn-warning.error-button throw error
+      .error.fade.panel.panel-default
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text")
+            br
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+        .panel-footer
+          button.btn.btn-danger.btn-lg.btn-block.error-submit(type="button", data-dismiss="modal") throw error
 
     script(type="text/template", id="string-template")
-      h3.text-center <%= key %>
-      p.description <%= description %>
+      h2.text-center <%= key %>
+      h4.description <%= description %>
+      .form-group
+        input.form-control.floating-label.string-value(type='text', data-hint='you must put string', placeholder!='<%= example %>')
+        button.btn.btn-primary.btn-lg.btn-block.submit(type="button") submit
       hr
-      form(role="form")
-        input.form-control.string-value(type="text", style="margin-bottom: 10px")
-      button.btn.btn-primary.btn-lg.btn-block(type="button") 値を返す
+      a.btn.btn-warning.error-button throw error
+      .error.fade.panel.panel-default
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text")
+            br
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+        .panel-footer
+          button.btn.btn-danger.btn-lg.btn-block.error-submit(type="button", data-dismiss="modal") throw error
 
     script(type="text/template", id="number-template")
       h3.text-center <%= key %>
       p.description <%= description %>
       hr
-      form(role="form")
-        input.form-control.number-value(type="number", style="margin-bottom: 10px")
-      button.btn.btn-primary.btn-lg.btn-block(type="button") 値を返す
+      form.form-horizontal.number-form(role="form")
+        fieldset
+          .form-group
+            input.form-control.floating-label.input-lg.number-value(type="number", placeholder!='<%= example %>', data-hint='you must put number')
+            button.btn.btn-primary.btn-lg.btn-block.return-submit(type="submit") submit
+      hr
+      a.btn.btn-warning.error-button throw error
+      .error.fade.panel.panel-default
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text")
+            br
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+        .panel-footer
+          button.btn.btn-danger.btn-lg.btn-block.error-submit(type="button", data-dismiss="modal") throw error
 
     script(type="text/template", id="list-template")
-      h3.text-center <%= key %>
-      p.description <%= description %>
+      h2.text-center <%= key %>
+      h4.description <%= description %>
+      <% _.each(list, function(item){ %>
+      a.btn.btn-primary.btn-lg.btn-block.item(href='javascript:void(0)', id!='<%= item %>') <%= item %>
+      <% }); %>
       hr
-      select.form-control
-        <% _.each(list, function(item){ %>
-        option<%= item %>
-        <% }); %>
-      button.btn-primary.btn-lg.btn-block(type="button") 値を返す
+      a.btn.btn-warning.error-button(data-toggle='modal', data-target='#errorModal') throw error
+      .error.fade.panel.panel-default
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text")
+            br
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+        .panel-footer
+          button.btn.btn-danger.btn-lg.btn-block.error-submit(type="button", data-dismiss="modal") throw error
 
     script(type="text/template", id="void-template")
       h3.text-center <%= key %>
       p.description <%= description %>
       hr
       button.void.btn.btn-primary.btn-block(type="button") はい
+      .error.fade.panel.panel-default
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text")
+            br
+            select.setphrase.form-control
+              option やりたくない
+              option 型がおかしい
+              option 選択肢からは選べない
+        .panel-footer
+          button.btn.btn-danger.btn-lg.btn-block.error-submit(type="button", data-dismiss="modal") throw error
 
     script(type="text/template", id="camera-template")
       h3.text-center <%= key %>
@@ -106,28 +180,18 @@ html
       input.camera(type="file",accept="image/*;capture=camera",id="imageFile")
 
     script(type="text/template", id="throw-error-template")
-      .modal-dialog
-        .modal-content
-          .modal-header
-            strong.text-center 命令内容は [<%= key %>] です。
-          .modal-body
-            p.description エラーの理由を文字列で入力するか、選択肢から選んでください
-            form(role="form")
-              input.form-control.string-value(type="text", style="margin-bottom: 10px")
+      .panel.panel-default
+        .panel-heading
+          strong.text-center 命令内容は [<%= key %>] です。
+        .panel-body
+          p.description エラーの理由を文字列で入力するか、選択肢から選んでください
+          form(role="form")
+            input.form-control.string-value(type="text", style="margin-bottom: 10px")
             select.setphrase.form-control
               option やりたくない
               option 型がおかしい
               option 選択肢からは選べない
-          .modal-footer
-            button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
-            button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
-            
-    script#todo-list-template(type='text/template')
-      ul.todo-list
-    script(type='text/template', id='todo-template')
-      li.todo-item
-        .well.col-xs-12
-          h5 <%= key %>
+        .panel-footer
+          button.cancel.btn.btn-danger.btn-lg.btn-block(type="button", data-dismiss="modal") throw error
+          button.return.btn.btn-primary.btn-lg.btn-block(type="button", data-dismiss="modal") 戻る
     script(src="./app.js")
-      
-      
