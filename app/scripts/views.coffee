@@ -32,10 +32,13 @@ class BaseView extends Marionette.ItemView
 
   cancel: ->
     console.log app
-    cid = app.task.get 'cid'
-    app.task.clear()
-    app.client.emit 'cancel_task'
-    app.client.cancel cid, 'client side cancel'
+    setTimeout ->
+      cid = app.task.get 'cid'
+      app.task.cancel()
+      app.task.clear()
+      app.client.emit 'cancel_task'
+      app.client.cancel cid, 'client side cancel'
+    , 300
 
   error: (e) ->
     console.log 'error view'
@@ -44,13 +47,15 @@ class BaseView extends Marionette.ItemView
 
   throwError: ->
     console.log 'throw error'
-    cid = app.task.get 'cid'
-    input = app.main.currentView.returnview.currentView.$el.find('.error input').val()
-    select = app.main.currentView.returnview.currentView.$el.find('.error select').val()
-    reason = if input is '' then select else input
-    app.task.clear()
-    app.client.emit 'cancel_task'
-    app.client.cancel reason
+    setTimeout ->
+      cid = app.task.get 'cid'
+      input = app.main.currentView.returnview.currentView.$el.find('.error input').val()
+      select = app.main.currentView.returnview.currentView.$el.find('.error select').val()
+      reason = if input is '' then select else input
+      app.tasks.remove app.tasks.where {cid: cid}
+      app.task.cancel reason
+      app.client.emit 'cancel_task'
+    , 300
     # app.client.cancel cid, 'client side cancel'
 
 class HeaderView extends Marionette.ItemView
@@ -82,6 +87,8 @@ class HeaderView extends Marionette.ItemView
     app.settings.show new SettingsView()
 
   back: ->
+    # ここで、adapter.sendしたい
+    app.client.adapter.send app.task.toJSON()
     app.task.clear()
     app.router.navigate '', true
 
@@ -139,28 +146,37 @@ class MainView extends Marionette.LayoutView
     if !cid?
       @returnview.show new TodoListView()
     else
+      tid = setTimeout ->
+        console.log 'timeout....'
+        @returnview.show new TodoListView()
+      , 5000
       app.client.accept @model.get('cid'), (err, tuple) =>
-        throw err if err
-        format = @model?.get 'format' or @model?.get('options')?.format
-        console.log @model
-        viewClass = switch format
-          when "", "index"
-            NormalView
-          when "boolean", "bool"
-            BooleanView
-          when "string"
-            StringView
-          when "list"
-            ListView
-          when "number", "int"
-            NumberView
-          when "void"
-            VoidView
-          when "camera"
-            CameraView
-          else
-            NormalView
-        @returnview.show new viewClass {model: @model}
+        clearInterval tid
+        @change err, tuple
+
+  change: (err, tuple) =>
+    throw err if err
+    format = @model?.get 'format' or @model?.get('options')?.format
+    console.log @model
+    viewClass = switch format
+      when "", "index"
+        NormalView
+      when "boolean", "bool"
+        BooleanView
+      when "string"
+        StringView
+      when "list"
+        ListView
+      when "number", "int"
+        NumberView
+      when "void"
+        VoidView
+      when "camera"
+        CameraView
+      else
+        NormalView
+    @returnview.show new viewClass {model: @model}
+
 
 class TodoView extends Marionette.ItemView
   template: '#todo-template'

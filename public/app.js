@@ -91,6 +91,9 @@
 	      console.log(arguments);
 	      console.log(tuple.data.cid);
 	      task = new Model.Task(tuple.data);
+	      _this.tasks.remove(_this.tasks.where({
+	        cid: task.get('cid')
+	      }));
 	      return _this.tasks.push(task);
 	    };
 	  })(this));
@@ -119,7 +122,8 @@
 
 	var Backbone, BaseView, BooleanView, CameraView, DoneListView, HeaderView, ListView, MainView, Marionette, NormalView, NumberView, SettingsView, StringView, Task, ThrowErrorView, TodoListView, TodoView, VoidView, app, _,
 	  __hasProp = {}.hasOwnProperty,
-	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+	  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 	Backbone = __webpack_require__(4);
 
@@ -171,12 +175,15 @@
 	  };
 
 	  BaseView.prototype.cancel = function() {
-	    var cid;
 	    console.log(app);
-	    cid = app.task.get('cid');
-	    app.task.clear();
-	    app.client.emit('cancel_task');
-	    return app.client.cancel(cid, 'client side cancel');
+	    return setTimeout(function() {
+	      var cid;
+	      cid = app.task.get('cid');
+	      app.task.cancel();
+	      app.task.clear();
+	      app.client.emit('cancel_task');
+	      return app.client.cancel(cid, 'client side cancel');
+	    }, 300);
 	  };
 
 	  BaseView.prototype.error = function(e) {
@@ -185,15 +192,19 @@
 	  };
 
 	  BaseView.prototype.throwError = function() {
-	    var cid, input, reason, select;
 	    console.log('throw error');
-	    cid = app.task.get('cid');
-	    input = app.main.currentView.returnview.currentView.$el.find('.error input').val();
-	    select = app.main.currentView.returnview.currentView.$el.find('.error select').val();
-	    reason = input === '' ? select : input;
-	    app.task.clear();
-	    app.client.emit('cancel_task');
-	    return app.client.cancel(reason);
+	    return setTimeout(function() {
+	      var cid, input, reason, select;
+	      cid = app.task.get('cid');
+	      input = app.main.currentView.returnview.currentView.$el.find('.error input').val();
+	      select = app.main.currentView.returnview.currentView.$el.find('.error select').val();
+	      reason = input === '' ? select : input;
+	      app.tasks.remove(app.tasks.where({
+	        cid: cid
+	      }));
+	      app.task.cancel(reason);
+	      return app.client.emit('cancel_task');
+	    }, 300);
 	  };
 
 	  return BaseView;
@@ -241,6 +252,7 @@
 	  };
 
 	  HeaderView.prototype.back = function() {
+	    app.client.adapter.send(app.task.toJSON());
 	    app.task.clear();
 	    return app.router.navigate('', true);
 	  };
@@ -319,6 +331,7 @@
 	  __extends(MainView, _super);
 
 	  function MainView() {
+	    this.change = __bind(this.change, this);
 	    return MainView.__super__.constructor.apply(this, arguments);
 	  }
 
@@ -335,49 +348,58 @@
 	  MainView.prototype.initialize = function() {};
 
 	  MainView.prototype.changeView = function() {
-	    var cid;
+	    var cid, tid;
 	    cid = this.model.get('cid');
 	    this.returnview.reset();
 	    if (cid == null) {
 	      return this.returnview.show(new TodoListView());
 	    } else {
+	      tid = setTimeout(function() {
+	        console.log('timeout....');
+	        return this.returnview.show(new TodoListView());
+	      }, 5000);
 	      return app.client.accept(this.model.get('cid'), (function(_this) {
 	        return function(err, tuple) {
-	          var format, viewClass, _ref, _ref1, _ref2;
-	          if (err) {
-	            throw err;
-	          }
-	          format = (_ref = _this.model) != null ? _ref.get('format' || ((_ref1 = _this.model) != null ? (_ref2 = _ref1.get('options')) != null ? _ref2.format : void 0 : void 0)) : void 0;
-	          console.log(_this.model);
-	          viewClass = (function() {
-	            switch (format) {
-	              case "":
-	              case "index":
-	                return NormalView;
-	              case "boolean":
-	              case "bool":
-	                return BooleanView;
-	              case "string":
-	                return StringView;
-	              case "list":
-	                return ListView;
-	              case "number":
-	              case "int":
-	                return NumberView;
-	              case "void":
-	                return VoidView;
-	              case "camera":
-	                return CameraView;
-	              default:
-	                return NormalView;
-	            }
-	          })();
-	          return _this.returnview.show(new viewClass({
-	            model: _this.model
-	          }));
+	          clearInterval(tid);
+	          return _this.change(err, tuple);
 	        };
 	      })(this));
 	    }
+	  };
+
+	  MainView.prototype.change = function(err, tuple) {
+	    var format, viewClass, _ref, _ref1, _ref2;
+	    if (err) {
+	      throw err;
+	    }
+	    format = (_ref = this.model) != null ? _ref.get('format' || ((_ref1 = this.model) != null ? (_ref2 = _ref1.get('options')) != null ? _ref2.format : void 0 : void 0)) : void 0;
+	    console.log(this.model);
+	    viewClass = (function() {
+	      switch (format) {
+	        case "":
+	        case "index":
+	          return NormalView;
+	        case "boolean":
+	        case "bool":
+	          return BooleanView;
+	        case "string":
+	          return StringView;
+	        case "list":
+	          return ListView;
+	        case "number":
+	        case "int":
+	          return NumberView;
+	        case "void":
+	          return VoidView;
+	        case "camera":
+	          return CameraView;
+	        default:
+	          return NormalView;
+	      }
+	    })();
+	    return this.returnview.show(new viewClass({
+	      model: this.model
+	    }));
 	  };
 
 	  return MainView;
@@ -777,11 +799,13 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Backbone, Task, Tasks,
+	var Backbone, Task, Tasks, app,
 	  __hasProp = {}.hasOwnProperty,
 	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 	Backbone = __webpack_require__(4);
+
+	app = __webpack_require__(3);
 
 	Task = (function(_super) {
 	  __extends(Task, _super);
@@ -791,7 +815,16 @@
 	  }
 
 	  Task.prototype.defaults = {
-	    description: ''
+	    description: '',
+	    example: ''
+	  };
+
+	  Task.prototype.cancel = function(reason) {
+	    console.log('task cancel');
+	    console.log(app);
+	    console.log(reason);
+	    app.client.cancel(this.get('cid'), reason);
+	    return this.clear();
 	  };
 
 	  return Task;
@@ -11870,21 +11903,18 @@
 	    };
 
 	    StreamClient.prototype.cancel = function(cid, reason) {
-	      var i, t, task, tuple, _i, _len, _ref1;
-	      task = null;
-	      console.log(this.tasks);
-	      _ref1 = this.tasks;
-	      for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
-	        t = _ref1[i];
-	        if (t.data.cid === cid) {
-	          task = t;
-	          this.tasks.splice(i, 1);
-	        }
-	      }
+	      var task, tuple;
+	      task = this.tasks.where({
+	        cid: cid
+	      })[0];
+	      console.log(task);
 	      if (task === null) {
 	        return false;
 	      }
-	      cid = task.cid;
+	      console.log('go!!');
+	      console.log(cid);
+	      console.log(reason);
+	      cid = task.get('cid');
 	      tuple = {
 	        baba: "script",
 	        type: "return",
@@ -11892,6 +11922,7 @@
 	        reason: reason
 	      };
 	      this.adapter.send(tuple);
+	      this.tasks.remove(task);
 	      return this.emit("cancel_task", reason);
 	    };
 
@@ -25111,13 +25142,13 @@
 
 	  SocketIOClient = __webpack_require__(31);
 
-	  Linda = __webpack_require__(32);
+	  Linda = __webpack_require__(33);
 
 	  if (typeof window !== "undefined" && window !== null) {
 	    Linda = window.Linda;
 	  }
 
-	  async = __webpack_require__(33);
+	  async = __webpack_require__(32);
 
 	  module.exports = LindaAdapter = (function() {
 	    LindaAdapter.DEFAULT = {
@@ -33800,7 +33831,7 @@
 
 	  // Set up Backbone appropriately for the environment. Start with AMD.
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(36), __webpack_require__(5), exports], __WEBPACK_AMD_DEFINE_RESULT__ = function(_, $, exports) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(34), __webpack_require__(5), exports], __WEBPACK_AMD_DEFINE_RESULT__ = function(_, $, exports) {
 	      // Export global even in AMD case in case this script is loaded with
 	      // others that may still expect a global Backbone.
 	      root.Backbone = factory(root, exports, _, $);
@@ -35425,7 +35456,7 @@
 	 */
 
 	var url = __webpack_require__(28);
-	var parser = __webpack_require__(34);
+	var parser = __webpack_require__(35);
 	var Manager = __webpack_require__(29);
 	var debug = __webpack_require__(37)('socket.io-client');
 
@@ -37590,8 +37621,8 @@
 	var eio = __webpack_require__(40);
 	var Socket = __webpack_require__(30);
 	var Emitter = __webpack_require__(41);
-	var parser = __webpack_require__(34);
-	var on = __webpack_require__(35);
+	var parser = __webpack_require__(35);
+	var on = __webpack_require__(36);
 	var bind = __webpack_require__(42);
 	var object = __webpack_require__(43);
 	var debug = __webpack_require__(37)('socket.io-client:manager');
@@ -38050,10 +38081,10 @@
 	 * Module dependencies.
 	 */
 
-	var parser = __webpack_require__(34);
+	var parser = __webpack_require__(35);
 	var Emitter = __webpack_require__(41);
 	var toArray = __webpack_require__(44);
-	var on = __webpack_require__(35);
+	var on = __webpack_require__(36);
 	var bind = __webpack_require__(42);
 	var debug = __webpack_require__(37)('socket.io-client:socket');
 	var hasBin = __webpack_require__(45);
@@ -38435,222 +38466,6 @@
 
 /***/ },
 /* 32 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(module) {(function() {
-	  var LindaClient, ReadTakeOption, TupleSpace;
-
-	  LindaClient = (function() {
-	    function LindaClient() {}
-
-	    LindaClient.prototype.connect = function(io) {
-	      this.io = io;
-	      return this;
-	    };
-
-	    LindaClient.prototype.tuplespace = function(name) {
-	      return new TupleSpace(this, name);
-	    };
-
-	    return LindaClient;
-
-	  })();
-
-	  TupleSpace = (function() {
-	    function TupleSpace(linda, name) {
-	      this.linda = linda;
-	      this.name = name;
-	      this.watch_callback_ids = {};
-	      this.io_callbacks = [];
-	      this.linda.io.on('disconnect', (function(_this) {
-	        return function() {
-	          return _this.remove_io_callbacks();
-	        };
-	      })(this));
-	    }
-
-	    TupleSpace.prototype.create_callback_id = function() {
-	      return Date.now() - Math.random();
-	    };
-
-	    TupleSpace.prototype.option = function(opt) {
-	      return new ReadTakeOption(this, opt);
-	    };
-
-	    TupleSpace.prototype.create_watch_callback_id = function(tuple) {
-	      var key;
-	      key = JSON.stringify(tuple);
-	      return this.watch_callback_ids[key] || (this.watch_callback_ids[key] = this.create_callback_id());
-	    };
-
-	    TupleSpace.prototype.remove_io_callbacks = function() {
-	      var c, _i, _len, _ref;
-	      _ref = this.io_callbacks;
-	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-	        c = _ref[_i];
-	        this.linda.io.removeListener(c.name, c.listener);
-	      }
-	      return this.io_callbacks = [];
-	    };
-
-	    TupleSpace.prototype.write = function(tuple, options) {
-	      var data;
-	      if (options == null) {
-	        options = {
-	          expire: null
-	        };
-	      }
-	      data = {
-	        tuplespace: this.name,
-	        tuple: tuple,
-	        options: options
-	      };
-	      return this.linda.io.emit('__linda_write', data);
-	    };
-
-	    TupleSpace.prototype.take = function(tuple, callback) {
-	      return this.option({}).take(tuple, callback);
-	    };
-
-	    TupleSpace.prototype.read = function(tuple, callback) {
-	      return this.option({}).read(tuple, callback);
-	    };
-
-	    TupleSpace.prototype.watch = function(tuple, callback) {
-	      var id, listener, name;
-	      if (typeof callback !== 'function') {
-	        return;
-	      }
-	      id = this.create_watch_callback_id(tuple);
-	      name = "__linda_watch_" + id;
-	      listener = function(err, tuple) {
-	        return callback(err, tuple);
-	      };
-	      this.io_callbacks.push({
-	        name: name,
-	        listener: listener
-	      });
-	      this.linda.io.on(name, listener);
-	      this.linda.io.emit('__linda_watch', {
-	        tuplespace: this.name,
-	        tuple: tuple,
-	        id: id
-	      });
-	      return id;
-	    };
-
-	    TupleSpace.prototype.cancel = function(id) {
-	      if (this.linda.io.connected) {
-	        this.linda.io.emit('__linda_cancel', {
-	          tuplespace: this.name,
-	          id: id
-	        });
-	      }
-	      return setTimeout((function(_this) {
-	        return function() {
-	          var c, i, _i, _ref, _results;
-	          _results = [];
-	          for (i = _i = _ref = _this.io_callbacks.length - 1; _ref <= 0 ? _i <= 0 : _i >= 0; i = _ref <= 0 ? ++_i : --_i) {
-	            c = _this.io_callbacks[i];
-	            if (c.name.match(new RegExp("_" + id + "$"))) {
-	              _this.linda.io.removeListener(c.name, c.listener);
-	              _results.push(_this.io_callbacks.splice(i, 1));
-	            } else {
-	              _results.push(void 0);
-	            }
-	          }
-	          return _results;
-	        };
-	      })(this), 100);
-	    };
-
-	    return TupleSpace;
-
-	  })();
-
-	  ReadTakeOption = (function() {
-	    var DEFAULT;
-
-	    DEFAULT = {
-	      sort: 'stack'
-	    };
-
-	    function ReadTakeOption(ts, opts) {
-	      var k, v;
-	      this.ts = ts;
-	      this.opts = opts != null ? opts : {};
-	      for (k in DEFAULT) {
-	        v = DEFAULT[k];
-	        if (!this.opts.hasOwnProperty(k)) {
-	          this.opts[k] = v;
-	        }
-	      }
-	    }
-
-	    ReadTakeOption.prototype.read = function(tuple, callback) {
-	      var id, listener, name;
-	      if (typeof callback !== 'function') {
-	        return;
-	      }
-	      id = this.ts.create_callback_id();
-	      name = "__linda_read_" + id;
-	      listener = function(err, tuple) {
-	        return callback(err, tuple);
-	      };
-	      this.ts.io_callbacks.push({
-	        name: name,
-	        listener: listener
-	      });
-	      this.ts.linda.io.once(name, listener);
-	      this.ts.linda.io.emit('__linda_read', {
-	        tuplespace: this.ts.name,
-	        tuple: tuple,
-	        id: id,
-	        options: this.opts
-	      });
-	      return id;
-	    };
-
-	    ReadTakeOption.prototype.take = function(tuple, callback) {
-	      var id, listener, name;
-	      if (typeof callback !== 'function') {
-	        return;
-	      }
-	      id = this.ts.create_callback_id();
-	      name = "__linda_take_" + id;
-	      listener = function(err, tuple) {
-	        return callback(err, tuple);
-	      };
-	      this.ts.io_callbacks.push({
-	        name: name,
-	        listener: listener
-	      });
-	      this.ts.linda.io.once(name, listener);
-	      this.ts.linda.io.emit('__linda_take', {
-	        tuplespace: this.ts.name,
-	        tuple: tuple,
-	        id: id,
-	        options: this.opts
-	      });
-	      return id;
-	    };
-
-	    return ReadTakeOption;
-
-	  })();
-
-	  if (typeof window !== "undefined" && window !== null) {
-	    window.Linda = LindaClient;
-	  } else if ((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null) {
-	    module.exports = LindaClient;
-	  }
-
-	}).call(this);
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module)))
-
-/***/ },
-/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process) {/*!
@@ -39780,439 +39595,223 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
 
 /***/ },
+/* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {(function() {
+	  var LindaClient, ReadTakeOption, TupleSpace;
+
+	  LindaClient = (function() {
+	    function LindaClient() {}
+
+	    LindaClient.prototype.connect = function(io) {
+	      this.io = io;
+	      return this;
+	    };
+
+	    LindaClient.prototype.tuplespace = function(name) {
+	      return new TupleSpace(this, name);
+	    };
+
+	    return LindaClient;
+
+	  })();
+
+	  TupleSpace = (function() {
+	    function TupleSpace(linda, name) {
+	      this.linda = linda;
+	      this.name = name;
+	      this.watch_callback_ids = {};
+	      this.io_callbacks = [];
+	      this.linda.io.on('disconnect', (function(_this) {
+	        return function() {
+	          return _this.remove_io_callbacks();
+	        };
+	      })(this));
+	    }
+
+	    TupleSpace.prototype.create_callback_id = function() {
+	      return Date.now() - Math.random();
+	    };
+
+	    TupleSpace.prototype.option = function(opt) {
+	      return new ReadTakeOption(this, opt);
+	    };
+
+	    TupleSpace.prototype.create_watch_callback_id = function(tuple) {
+	      var key;
+	      key = JSON.stringify(tuple);
+	      return this.watch_callback_ids[key] || (this.watch_callback_ids[key] = this.create_callback_id());
+	    };
+
+	    TupleSpace.prototype.remove_io_callbacks = function() {
+	      var c, _i, _len, _ref;
+	      _ref = this.io_callbacks;
+	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+	        c = _ref[_i];
+	        this.linda.io.removeListener(c.name, c.listener);
+	      }
+	      return this.io_callbacks = [];
+	    };
+
+	    TupleSpace.prototype.write = function(tuple, options) {
+	      var data;
+	      if (options == null) {
+	        options = {
+	          expire: null
+	        };
+	      }
+	      data = {
+	        tuplespace: this.name,
+	        tuple: tuple,
+	        options: options
+	      };
+	      return this.linda.io.emit('__linda_write', data);
+	    };
+
+	    TupleSpace.prototype.take = function(tuple, callback) {
+	      return this.option({}).take(tuple, callback);
+	    };
+
+	    TupleSpace.prototype.read = function(tuple, callback) {
+	      return this.option({}).read(tuple, callback);
+	    };
+
+	    TupleSpace.prototype.watch = function(tuple, callback) {
+	      var id, listener, name;
+	      if (typeof callback !== 'function') {
+	        return;
+	      }
+	      id = this.create_watch_callback_id(tuple);
+	      name = "__linda_watch_" + id;
+	      listener = function(err, tuple) {
+	        return callback(err, tuple);
+	      };
+	      this.io_callbacks.push({
+	        name: name,
+	        listener: listener
+	      });
+	      this.linda.io.on(name, listener);
+	      this.linda.io.emit('__linda_watch', {
+	        tuplespace: this.name,
+	        tuple: tuple,
+	        id: id
+	      });
+	      return id;
+	    };
+
+	    TupleSpace.prototype.cancel = function(id) {
+	      if (this.linda.io.connected) {
+	        this.linda.io.emit('__linda_cancel', {
+	          tuplespace: this.name,
+	          id: id
+	        });
+	      }
+	      return setTimeout((function(_this) {
+	        return function() {
+	          var c, i, _i, _ref, _results;
+	          _results = [];
+	          for (i = _i = _ref = _this.io_callbacks.length - 1; _ref <= 0 ? _i <= 0 : _i >= 0; i = _ref <= 0 ? ++_i : --_i) {
+	            c = _this.io_callbacks[i];
+	            if (c.name.match(new RegExp("_" + id + "$"))) {
+	              _this.linda.io.removeListener(c.name, c.listener);
+	              _results.push(_this.io_callbacks.splice(i, 1));
+	            } else {
+	              _results.push(void 0);
+	            }
+	          }
+	          return _results;
+	        };
+	      })(this), 100);
+	    };
+
+	    return TupleSpace;
+
+	  })();
+
+	  ReadTakeOption = (function() {
+	    var DEFAULT;
+
+	    DEFAULT = {
+	      sort: 'stack'
+	    };
+
+	    function ReadTakeOption(ts, opts) {
+	      var k, v;
+	      this.ts = ts;
+	      this.opts = opts != null ? opts : {};
+	      for (k in DEFAULT) {
+	        v = DEFAULT[k];
+	        if (!this.opts.hasOwnProperty(k)) {
+	          this.opts[k] = v;
+	        }
+	      }
+	    }
+
+	    ReadTakeOption.prototype.read = function(tuple, callback) {
+	      var id, listener, name;
+	      if (typeof callback !== 'function') {
+	        return;
+	      }
+	      id = this.ts.create_callback_id();
+	      name = "__linda_read_" + id;
+	      listener = function(err, tuple) {
+	        return callback(err, tuple);
+	      };
+	      this.ts.io_callbacks.push({
+	        name: name,
+	        listener: listener
+	      });
+	      this.ts.linda.io.once(name, listener);
+	      this.ts.linda.io.emit('__linda_read', {
+	        tuplespace: this.ts.name,
+	        tuple: tuple,
+	        id: id,
+	        options: this.opts
+	      });
+	      return id;
+	    };
+
+	    ReadTakeOption.prototype.take = function(tuple, callback) {
+	      var id, listener, name;
+	      if (typeof callback !== 'function') {
+	        return;
+	      }
+	      id = this.ts.create_callback_id();
+	      name = "__linda_take_" + id;
+	      listener = function(err, tuple) {
+	        return callback(err, tuple);
+	      };
+	      this.ts.io_callbacks.push({
+	        name: name,
+	        listener: listener
+	      });
+	      this.ts.linda.io.once(name, listener);
+	      this.ts.linda.io.emit('__linda_take', {
+	        tuplespace: this.ts.name,
+	        tuple: tuple,
+	        id: id,
+	        options: this.opts
+	      });
+	      return id;
+	    };
+
+	    return ReadTakeOption;
+
+	  })();
+
+	  if (typeof window !== "undefined" && window !== null) {
+	    window.Linda = LindaClient;
+	  } else if ((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null) {
+	    module.exports = LindaClient;
+	  }
+
+	}).call(this);
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module)))
+
+/***/ },
 /* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * Module dependencies.
-	 */
-
-	var debug = __webpack_require__(55)('socket.io-parser');
-	var json = __webpack_require__(58);
-	var isArray = __webpack_require__(52);
-	var Emitter = __webpack_require__(53);
-	var binary = __webpack_require__(47);
-	var isBuf = __webpack_require__(48);
-
-	/**
-	 * Protocol version.
-	 *
-	 * @api public
-	 */
-
-	exports.protocol = 4;
-
-	/**
-	 * Packet types.
-	 *
-	 * @api public
-	 */
-
-	exports.types = [
-	  'CONNECT',
-	  'DISCONNECT',
-	  'EVENT',
-	  'BINARY_EVENT',
-	  'ACK',
-	  'BINARY_ACK',
-	  'ERROR'
-	];
-
-	/**
-	 * Packet type `connect`.
-	 *
-	 * @api public
-	 */
-
-	exports.CONNECT = 0;
-
-	/**
-	 * Packet type `disconnect`.
-	 *
-	 * @api public
-	 */
-
-	exports.DISCONNECT = 1;
-
-	/**
-	 * Packet type `event`.
-	 *
-	 * @api public
-	 */
-
-	exports.EVENT = 2;
-
-	/**
-	 * Packet type `ack`.
-	 *
-	 * @api public
-	 */
-
-	exports.ACK = 3;
-
-	/**
-	 * Packet type `error`.
-	 *
-	 * @api public
-	 */
-
-	exports.ERROR = 4;
-
-	/**
-	 * Packet type 'binary event'
-	 *
-	 * @api public
-	 */
-
-	exports.BINARY_EVENT = 5;
-
-	/**
-	 * Packet type `binary ack`. For acks with binary arguments.
-	 *
-	 * @api public
-	 */
-
-	exports.BINARY_ACK = 6;
-
-	/**
-	 * Encoder constructor.
-	 *
-	 * @api public
-	 */
-
-	exports.Encoder = Encoder;
-
-	/**
-	 * Decoder constructor.
-	 *
-	 * @api public
-	 */
-
-	exports.Decoder = Decoder;
-
-	/**
-	 * A socket.io Encoder instance
-	 *
-	 * @api public
-	 */
-
-	function Encoder() {}
-
-	/**
-	 * Encode a packet as a single string if non-binary, or as a
-	 * buffer sequence, depending on packet type.
-	 *
-	 * @param {Object} obj - packet object
-	 * @param {Function} callback - function to handle encodings (likely engine.write)
-	 * @return Calls callback with Array of encodings
-	 * @api public
-	 */
-
-	Encoder.prototype.encode = function(obj, callback){
-	  debug('encoding packet %j', obj);
-
-	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-	    encodeAsBinary(obj, callback);
-	  }
-	  else {
-	    var encoding = encodeAsString(obj);
-	    callback([encoding]);
-	  }
-	};
-
-	/**
-	 * Encode packet as string.
-	 *
-	 * @param {Object} packet
-	 * @return {String} encoded
-	 * @api private
-	 */
-
-	function encodeAsString(obj) {
-	  var str = '';
-	  var nsp = false;
-
-	  // first is type
-	  str += obj.type;
-
-	  // attachments if we have them
-	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-	    str += obj.attachments;
-	    str += '-';
-	  }
-
-	  // if we have a namespace other than `/`
-	  // we append it followed by a comma `,`
-	  if (obj.nsp && '/' != obj.nsp) {
-	    nsp = true;
-	    str += obj.nsp;
-	  }
-
-	  // immediately followed by the id
-	  if (null != obj.id) {
-	    if (nsp) {
-	      str += ',';
-	      nsp = false;
-	    }
-	    str += obj.id;
-	  }
-
-	  // json data
-	  if (null != obj.data) {
-	    if (nsp) str += ',';
-	    str += json.stringify(obj.data);
-	  }
-
-	  debug('encoded %j as %s', obj, str);
-	  return str;
-	}
-
-	/**
-	 * Encode packet as 'buffer sequence' by removing blobs, and
-	 * deconstructing packet into object with placeholders and
-	 * a list of buffers.
-	 *
-	 * @param {Object} packet
-	 * @return {Buffer} encoded
-	 * @api private
-	 */
-
-	function encodeAsBinary(obj, callback) {
-
-	  function writeEncoding(bloblessData) {
-	    var deconstruction = binary.deconstructPacket(bloblessData);
-	    var pack = encodeAsString(deconstruction.packet);
-	    var buffers = deconstruction.buffers;
-
-	    buffers.unshift(pack); // add packet info to beginning of data list
-	    callback(buffers); // write all the buffers
-	  }
-
-	  binary.removeBlobs(obj, writeEncoding);
-	}
-
-	/**
-	 * A socket.io Decoder instance
-	 *
-	 * @return {Object} decoder
-	 * @api public
-	 */
-
-	function Decoder() {
-	  this.reconstructor = null;
-	}
-
-	/**
-	 * Mix in `Emitter` with Decoder.
-	 */
-
-	Emitter(Decoder.prototype);
-
-	/**
-	 * Decodes an ecoded packet string into packet JSON.
-	 *
-	 * @param {String} obj - encoded packet
-	 * @return {Object} packet
-	 * @api public
-	 */
-
-	Decoder.prototype.add = function(obj) {
-	  var packet;
-	  if ('string' == typeof obj) {
-	    packet = decodeString(obj);
-	    if (exports.BINARY_EVENT == packet.type || exports.BINARY_ACK == packet.type) { // binary packet's json
-	      this.reconstructor = new BinaryReconstructor(packet);
-
-	      // no attachments, labeled binary but no binary data to follow
-	      if (this.reconstructor.reconPack.attachments == 0) {
-	        this.emit('decoded', packet);
-	      }
-	    } else { // non-binary full packet
-	      this.emit('decoded', packet);
-	    }
-	  }
-	  else if (isBuf(obj) || obj.base64) { // raw binary data
-	    if (!this.reconstructor) {
-	      throw new Error('got binary data when not reconstructing a packet');
-	    } else {
-	      packet = this.reconstructor.takeBinaryData(obj);
-	      if (packet) { // received final buffer
-	        this.reconstructor = null;
-	        this.emit('decoded', packet);
-	      }
-	    }
-	  }
-	  else {
-	    throw new Error('Unknown type: ' + obj);
-	  }
-	};
-
-	/**
-	 * Decode a packet String (JSON data)
-	 *
-	 * @param {String} str
-	 * @return {Object} packet
-	 * @api private
-	 */
-
-	function decodeString(str) {
-	  var p = {};
-	  var i = 0;
-
-	  // look up type
-	  p.type = Number(str.charAt(0));
-	  if (null == exports.types[p.type]) return error();
-
-	  // look up attachments if type binary
-	  if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
-	    p.attachments = '';
-	    while (str.charAt(++i) != '-') {
-	      p.attachments += str.charAt(i);
-	    }
-	    p.attachments = Number(p.attachments);
-	  }
-
-	  // look up namespace (if any)
-	  if ('/' == str.charAt(i + 1)) {
-	    p.nsp = '';
-	    while (++i) {
-	      var c = str.charAt(i);
-	      if (',' == c) break;
-	      p.nsp += c;
-	      if (i + 1 == str.length) break;
-	    }
-	  } else {
-	    p.nsp = '/';
-	  }
-
-	  // look up id
-	  var next = str.charAt(i + 1);
-	  if ('' != next && Number(next) == next) {
-	    p.id = '';
-	    while (++i) {
-	      var c = str.charAt(i);
-	      if (null == c || Number(c) != c) {
-	        --i;
-	        break;
-	      }
-	      p.id += str.charAt(i);
-	      if (i + 1 == str.length) break;
-	    }
-	    p.id = Number(p.id);
-	  }
-
-	  // look up json data
-	  if (str.charAt(++i)) {
-	    try {
-	      p.data = json.parse(str.substr(i));
-	    } catch(e){
-	      return error();
-	    }
-	  }
-
-	  debug('decoded %s as %j', str, p);
-	  return p;
-	}
-
-	/**
-	 * Deallocates a parser's resources
-	 *
-	 * @api public
-	 */
-
-	Decoder.prototype.destroy = function() {
-	  if (this.reconstructor) {
-	    this.reconstructor.finishedReconstruction();
-	  }
-	};
-
-	/**
-	 * A manager of a binary event's 'buffer sequence'. Should
-	 * be constructed whenever a packet of type BINARY_EVENT is
-	 * decoded.
-	 *
-	 * @param {Object} packet
-	 * @return {BinaryReconstructor} initialized reconstructor
-	 * @api private
-	 */
-
-	function BinaryReconstructor(packet) {
-	  this.reconPack = packet;
-	  this.buffers = [];
-	}
-
-	/**
-	 * Method to be called when binary data received from connection
-	 * after a BINARY_EVENT packet.
-	 *
-	 * @param {Buffer | ArrayBuffer} binData - the raw binary data received
-	 * @return {null | Object} returns null if more binary data is expected or
-	 *   a reconstructed packet object if all buffers have been received.
-	 * @api private
-	 */
-
-	BinaryReconstructor.prototype.takeBinaryData = function(binData) {
-	  this.buffers.push(binData);
-	  if (this.buffers.length == this.reconPack.attachments) { // done with buffer list
-	    var packet = binary.reconstructPacket(this.reconPack, this.buffers);
-	    this.finishedReconstruction();
-	    return packet;
-	  }
-	  return null;
-	};
-
-	/**
-	 * Cleans up binary packet reconstruction variables.
-	 *
-	 * @api private
-	 */
-
-	BinaryReconstructor.prototype.finishedReconstruction = function() {
-	  this.reconPack = null;
-	  this.buffers = [];
-	};
-
-	function error(data){
-	  return {
-	    type: exports.ERROR,
-	    data: 'parser error'
-	  };
-	}
-
-
-/***/ },
-/* 35 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * Module exports.
-	 */
-
-	module.exports = on;
-
-	/**
-	 * Helper for subscriptions.
-	 *
-	 * @param {Object|EventEmitter} obj with `Emitter` mixin or `EventEmitter`
-	 * @param {String} event name
-	 * @param {Function} callback
-	 * @api public
-	 */
-
-	function on(obj, ev, fn) {
-	  obj.on(ev, fn);
-	  return {
-	    destroy: function(){
-	      obj.removeListener(ev, fn);
-	    }
-	  };
-	}
-
-
-/***/ },
-/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.7.0
@@ -41630,6 +41229,438 @@
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  }
 	}.call(this));
+
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * Module dependencies.
+	 */
+
+	var debug = __webpack_require__(55)('socket.io-parser');
+	var json = __webpack_require__(58);
+	var isArray = __webpack_require__(52);
+	var Emitter = __webpack_require__(53);
+	var binary = __webpack_require__(47);
+	var isBuf = __webpack_require__(48);
+
+	/**
+	 * Protocol version.
+	 *
+	 * @api public
+	 */
+
+	exports.protocol = 4;
+
+	/**
+	 * Packet types.
+	 *
+	 * @api public
+	 */
+
+	exports.types = [
+	  'CONNECT',
+	  'DISCONNECT',
+	  'EVENT',
+	  'BINARY_EVENT',
+	  'ACK',
+	  'BINARY_ACK',
+	  'ERROR'
+	];
+
+	/**
+	 * Packet type `connect`.
+	 *
+	 * @api public
+	 */
+
+	exports.CONNECT = 0;
+
+	/**
+	 * Packet type `disconnect`.
+	 *
+	 * @api public
+	 */
+
+	exports.DISCONNECT = 1;
+
+	/**
+	 * Packet type `event`.
+	 *
+	 * @api public
+	 */
+
+	exports.EVENT = 2;
+
+	/**
+	 * Packet type `ack`.
+	 *
+	 * @api public
+	 */
+
+	exports.ACK = 3;
+
+	/**
+	 * Packet type `error`.
+	 *
+	 * @api public
+	 */
+
+	exports.ERROR = 4;
+
+	/**
+	 * Packet type 'binary event'
+	 *
+	 * @api public
+	 */
+
+	exports.BINARY_EVENT = 5;
+
+	/**
+	 * Packet type `binary ack`. For acks with binary arguments.
+	 *
+	 * @api public
+	 */
+
+	exports.BINARY_ACK = 6;
+
+	/**
+	 * Encoder constructor.
+	 *
+	 * @api public
+	 */
+
+	exports.Encoder = Encoder;
+
+	/**
+	 * Decoder constructor.
+	 *
+	 * @api public
+	 */
+
+	exports.Decoder = Decoder;
+
+	/**
+	 * A socket.io Encoder instance
+	 *
+	 * @api public
+	 */
+
+	function Encoder() {}
+
+	/**
+	 * Encode a packet as a single string if non-binary, or as a
+	 * buffer sequence, depending on packet type.
+	 *
+	 * @param {Object} obj - packet object
+	 * @param {Function} callback - function to handle encodings (likely engine.write)
+	 * @return Calls callback with Array of encodings
+	 * @api public
+	 */
+
+	Encoder.prototype.encode = function(obj, callback){
+	  debug('encoding packet %j', obj);
+
+	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
+	    encodeAsBinary(obj, callback);
+	  }
+	  else {
+	    var encoding = encodeAsString(obj);
+	    callback([encoding]);
+	  }
+	};
+
+	/**
+	 * Encode packet as string.
+	 *
+	 * @param {Object} packet
+	 * @return {String} encoded
+	 * @api private
+	 */
+
+	function encodeAsString(obj) {
+	  var str = '';
+	  var nsp = false;
+
+	  // first is type
+	  str += obj.type;
+
+	  // attachments if we have them
+	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
+	    str += obj.attachments;
+	    str += '-';
+	  }
+
+	  // if we have a namespace other than `/`
+	  // we append it followed by a comma `,`
+	  if (obj.nsp && '/' != obj.nsp) {
+	    nsp = true;
+	    str += obj.nsp;
+	  }
+
+	  // immediately followed by the id
+	  if (null != obj.id) {
+	    if (nsp) {
+	      str += ',';
+	      nsp = false;
+	    }
+	    str += obj.id;
+	  }
+
+	  // json data
+	  if (null != obj.data) {
+	    if (nsp) str += ',';
+	    str += json.stringify(obj.data);
+	  }
+
+	  debug('encoded %j as %s', obj, str);
+	  return str;
+	}
+
+	/**
+	 * Encode packet as 'buffer sequence' by removing blobs, and
+	 * deconstructing packet into object with placeholders and
+	 * a list of buffers.
+	 *
+	 * @param {Object} packet
+	 * @return {Buffer} encoded
+	 * @api private
+	 */
+
+	function encodeAsBinary(obj, callback) {
+
+	  function writeEncoding(bloblessData) {
+	    var deconstruction = binary.deconstructPacket(bloblessData);
+	    var pack = encodeAsString(deconstruction.packet);
+	    var buffers = deconstruction.buffers;
+
+	    buffers.unshift(pack); // add packet info to beginning of data list
+	    callback(buffers); // write all the buffers
+	  }
+
+	  binary.removeBlobs(obj, writeEncoding);
+	}
+
+	/**
+	 * A socket.io Decoder instance
+	 *
+	 * @return {Object} decoder
+	 * @api public
+	 */
+
+	function Decoder() {
+	  this.reconstructor = null;
+	}
+
+	/**
+	 * Mix in `Emitter` with Decoder.
+	 */
+
+	Emitter(Decoder.prototype);
+
+	/**
+	 * Decodes an ecoded packet string into packet JSON.
+	 *
+	 * @param {String} obj - encoded packet
+	 * @return {Object} packet
+	 * @api public
+	 */
+
+	Decoder.prototype.add = function(obj) {
+	  var packet;
+	  if ('string' == typeof obj) {
+	    packet = decodeString(obj);
+	    if (exports.BINARY_EVENT == packet.type || exports.BINARY_ACK == packet.type) { // binary packet's json
+	      this.reconstructor = new BinaryReconstructor(packet);
+
+	      // no attachments, labeled binary but no binary data to follow
+	      if (this.reconstructor.reconPack.attachments == 0) {
+	        this.emit('decoded', packet);
+	      }
+	    } else { // non-binary full packet
+	      this.emit('decoded', packet);
+	    }
+	  }
+	  else if (isBuf(obj) || obj.base64) { // raw binary data
+	    if (!this.reconstructor) {
+	      throw new Error('got binary data when not reconstructing a packet');
+	    } else {
+	      packet = this.reconstructor.takeBinaryData(obj);
+	      if (packet) { // received final buffer
+	        this.reconstructor = null;
+	        this.emit('decoded', packet);
+	      }
+	    }
+	  }
+	  else {
+	    throw new Error('Unknown type: ' + obj);
+	  }
+	};
+
+	/**
+	 * Decode a packet String (JSON data)
+	 *
+	 * @param {String} str
+	 * @return {Object} packet
+	 * @api private
+	 */
+
+	function decodeString(str) {
+	  var p = {};
+	  var i = 0;
+
+	  // look up type
+	  p.type = Number(str.charAt(0));
+	  if (null == exports.types[p.type]) return error();
+
+	  // look up attachments if type binary
+	  if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
+	    p.attachments = '';
+	    while (str.charAt(++i) != '-') {
+	      p.attachments += str.charAt(i);
+	    }
+	    p.attachments = Number(p.attachments);
+	  }
+
+	  // look up namespace (if any)
+	  if ('/' == str.charAt(i + 1)) {
+	    p.nsp = '';
+	    while (++i) {
+	      var c = str.charAt(i);
+	      if (',' == c) break;
+	      p.nsp += c;
+	      if (i + 1 == str.length) break;
+	    }
+	  } else {
+	    p.nsp = '/';
+	  }
+
+	  // look up id
+	  var next = str.charAt(i + 1);
+	  if ('' != next && Number(next) == next) {
+	    p.id = '';
+	    while (++i) {
+	      var c = str.charAt(i);
+	      if (null == c || Number(c) != c) {
+	        --i;
+	        break;
+	      }
+	      p.id += str.charAt(i);
+	      if (i + 1 == str.length) break;
+	    }
+	    p.id = Number(p.id);
+	  }
+
+	  // look up json data
+	  if (str.charAt(++i)) {
+	    try {
+	      p.data = json.parse(str.substr(i));
+	    } catch(e){
+	      return error();
+	    }
+	  }
+
+	  debug('decoded %s as %j', str, p);
+	  return p;
+	}
+
+	/**
+	 * Deallocates a parser's resources
+	 *
+	 * @api public
+	 */
+
+	Decoder.prototype.destroy = function() {
+	  if (this.reconstructor) {
+	    this.reconstructor.finishedReconstruction();
+	  }
+	};
+
+	/**
+	 * A manager of a binary event's 'buffer sequence'. Should
+	 * be constructed whenever a packet of type BINARY_EVENT is
+	 * decoded.
+	 *
+	 * @param {Object} packet
+	 * @return {BinaryReconstructor} initialized reconstructor
+	 * @api private
+	 */
+
+	function BinaryReconstructor(packet) {
+	  this.reconPack = packet;
+	  this.buffers = [];
+	}
+
+	/**
+	 * Method to be called when binary data received from connection
+	 * after a BINARY_EVENT packet.
+	 *
+	 * @param {Buffer | ArrayBuffer} binData - the raw binary data received
+	 * @return {null | Object} returns null if more binary data is expected or
+	 *   a reconstructed packet object if all buffers have been received.
+	 * @api private
+	 */
+
+	BinaryReconstructor.prototype.takeBinaryData = function(binData) {
+	  this.buffers.push(binData);
+	  if (this.buffers.length == this.reconPack.attachments) { // done with buffer list
+	    var packet = binary.reconstructPacket(this.reconPack, this.buffers);
+	    this.finishedReconstruction();
+	    return packet;
+	  }
+	  return null;
+	};
+
+	/**
+	 * Cleans up binary packet reconstruction variables.
+	 *
+	 * @api private
+	 */
+
+	BinaryReconstructor.prototype.finishedReconstruction = function() {
+	  this.reconPack = null;
+	  this.buffers = [];
+	};
+
+	function error(data){
+	  return {
+	    type: exports.ERROR,
+	    data: 'parser error'
+	  };
+	}
+
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * Module exports.
+	 */
+
+	module.exports = on;
+
+	/**
+	 * Helper for subscriptions.
+	 *
+	 * @param {Object|EventEmitter} obj with `Emitter` mixin or `EventEmitter`
+	 * @param {String} event name
+	 * @param {Function} callback
+	 * @api public
+	 */
+
+	function on(obj, ev, fn) {
+	  obj.on(ev, fn);
+	  return {
+	    destroy: function(){
+	      obj.removeListener(ev, fn);
+	    }
+	  };
+	}
 
 
 /***/ },
@@ -43737,8 +43768,8 @@
 
 	var debug = __webpack_require__(79)('socket.io-parser');
 	var json = __webpack_require__(80);
-	var isArray = __webpack_require__(75);
-	var Emitter = __webpack_require__(76);
+	var isArray = __webpack_require__(76);
+	var Emitter = __webpack_require__(75);
 	var binary = __webpack_require__(70);
 	var isBuf = __webpack_require__(71);
 
@@ -46268,7 +46299,7 @@
 	 * Module requirements
 	 */
 
-	var isArray = __webpack_require__(75);
+	var isArray = __webpack_require__(76);
 	var isBuf = __webpack_require__(71);
 
 	/**
@@ -46654,15 +46685,6 @@
 /* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = Array.isArray || function (arr) {
-	  return Object.prototype.toString.call(arr) == '[object Array]';
-	};
-
-
-/***/ },
-/* 76 */
-/***/ function(module, exports, __webpack_require__) {
-
 	
 	/**
 	 * Expose `Emitter`.
@@ -46826,6 +46848,15 @@
 
 	Emitter.prototype.hasListeners = function(event){
 	  return !! this.listeners(event).length;
+	};
+
+
+/***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = Array.isArray || function (arr) {
+	  return Object.prototype.toString.call(arr) == '[object Array]';
 	};
 
 
@@ -50963,7 +50994,7 @@
 
 	var keys = __webpack_require__(110);
 	var sliceBuffer = __webpack_require__(112);
-	var base64encoder = __webpack_require__(119);
+	var base64encoder = __webpack_require__(117);
 	var after = __webpack_require__(113);
 	var utf8 = __webpack_require__(115);
 
@@ -51812,7 +51843,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	// browser shim for xmlhttprequest module
-	var hasCORS = __webpack_require__(117);
+	var hasCORS = __webpack_require__(118);
 
 	module.exports = function(opts) {
 	  var xdomain = opts.xdomain;
@@ -51860,7 +51891,7 @@
 	var XMLHttpRequest = __webpack_require__(106);
 	var Polling = __webpack_require__(111);
 	var Emitter = __webpack_require__(64);
-	var inherit = __webpack_require__(118);
+	var inherit = __webpack_require__(119);
 	var debug = __webpack_require__(59)('engine.io-client:polling-xhr');
 
 	/**
@@ -52217,7 +52248,7 @@
 	 */
 
 	var Polling = __webpack_require__(111);
-	var inherit = __webpack_require__(118);
+	var inherit = __webpack_require__(119);
 
 	/**
 	 * Module exports.
@@ -52457,7 +52488,7 @@
 	var Transport = __webpack_require__(92);
 	var parser = __webpack_require__(98);
 	var parseqs = __webpack_require__(104);
-	var inherit = __webpack_require__(118);
+	var inherit = __webpack_require__(119);
 	var debug = __webpack_require__(59)('engine.io-client:websocket');
 
 	/**
@@ -52717,7 +52748,7 @@
 	var Transport = __webpack_require__(92);
 	var parseqs = __webpack_require__(104);
 	var parser = __webpack_require__(98);
-	var inherit = __webpack_require__(118);
+	var inherit = __webpack_require__(119);
 	var debug = __webpack_require__(59)('engine.io-client:polling');
 
 	/**
@@ -53344,47 +53375,6 @@
 /* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	/**
-	 * Module dependencies.
-	 */
-
-	var global = __webpack_require__(121);
-
-	/**
-	 * Module exports.
-	 *
-	 * Logic borrowed from Modernizr:
-	 *
-	 *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
-	 */
-
-	try {
-	  module.exports = 'XMLHttpRequest' in global &&
-	    'withCredentials' in new global.XMLHttpRequest();
-	} catch (err) {
-	  // if XMLHttp support is disabled in IE then it will throw
-	  // when trying to create
-	  module.exports = false;
-	}
-
-
-/***/ },
-/* 118 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	module.exports = function(a, b){
-	  var fn = function(){};
-	  fn.prototype = b.prototype;
-	  a.prototype = new fn;
-	  a.prototype.constructor = a;
-	};
-
-/***/ },
-/* 119 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/*
 	 * base64-arraybuffer
 	 * https://github.com/niklasvh/base64-arraybuffer
@@ -53445,6 +53435,47 @@
 	  };
 	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
+
+/***/ },
+/* 118 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * Module dependencies.
+	 */
+
+	var global = __webpack_require__(121);
+
+	/**
+	 * Module exports.
+	 *
+	 * Logic borrowed from Modernizr:
+	 *
+	 *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+	 */
+
+	try {
+	  module.exports = 'XMLHttpRequest' in global &&
+	    'withCredentials' in new global.XMLHttpRequest();
+	} catch (err) {
+	  // if XMLHttp support is disabled in IE then it will throw
+	  // when trying to create
+	  module.exports = false;
+	}
+
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	module.exports = function(a, b){
+	  var fn = function(){};
+	  fn.prototype = b.prototype;
+	  a.prototype = new fn;
+	  a.prototype.constructor = a;
+	};
 
 /***/ },
 /* 120 */

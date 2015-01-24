@@ -26,6 +26,7 @@ Application.addInitializer ->
     console.log arguments
     console.log tuple.data.cid
     task = new Model.Task tuple.data
+    @tasks.remove @tasks.where {cid: task.get 'cid'}
     @tasks.push task
     # @router.navigate "/tasks/#{tuple.data.cid}", true
   @client.on 'cancel_task', ->
